@@ -1,1 +1,22 @@
-Hackathon II - Todo Spec-Driven Development
+/Hackathon II - Todo Spec-Driven Development
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# UV
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -23,7 +23,7 @@ tests:
 
 ## Prompt
 
-will will use TDD (test driven development) and we will use pytest for this purpose and also we will use uv (python package manager) as per docs requriements, will will fullfil the "Nine Pillars of AI-Driven Development" requriemnts, i think you should go through the @Hackathon II - Todo Spec-Driven Development.pdf  file again and write the constitution.md file again
+we will use TDD (test driven development) and we will use pytest for this purpose and also we will use uv (python package manager) as per docs requriements, will will fullfil the "Nine Pillars of AI-Driven Development" requriemnts, i think you should go through the @Hackathon II - Todo Spec-Driven Development.pdf  file again and write the constitution.md file again
 
 ## Response snapshot
 
