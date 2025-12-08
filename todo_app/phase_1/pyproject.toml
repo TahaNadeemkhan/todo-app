@@ -1,0 +1,25 @@
+[project]
+name = "todo-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.12.5",
+    "rich>=14.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.8",
+]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]
