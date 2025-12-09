@@ -75,6 +75,11 @@ The project development must follow the strict 5-phase evolution path defined in
 - **Sequential Progression:** Development must proceed sequentially from Phase 1 (Console App) through Phase 5 (Cloud Deployment). Skipping phases is prohibited.
 - **Iterative Refinement:** Each phase builds upon the previous one. Code must be refactored, not rewritten, to accommodate new requirements (e.g., migrating from In-Memory to SQLModel in Phase 2).
 - **Compliance:** Each phase must meet all defined requirements and deliverables before proceeding to the next.
+    - **Phase 1 (Console App):** Completed as a foundational CLI application.
+    - **Phase 2 (Web App):** Develop with Python FastAPI, SQLModel (for Neon Serverless PostgreSQL), Next.js 16+ (App Router), Better Auth with JWT, and multi-user API patterns (e.g., `/api/{user_id}/tasks`). Implement a PATCH endpoint for task completion.
+    - **Phase 3 (AI Chatbot):** Integrate OpenAI ChatKit for chat UI, Claude Agent SDK for custom agents, and Claude Code MCP SDK for custom tools. Ensure stateless chat service design.
+    - **Phase 4 (Cloud-Native Deployment):** Containerize with Docker, deploy locally with Minikube, manage with Helm charts, and integrate AIOps using `kubectl-ai` and `kagent`.
+    - **Phase 5 (Event-Driven Microservices):** Implement event streaming with Kafka/Redpanda, leverage Dapr for distributed application building blocks, and deploy to managed Kubernetes services (DigitalOcean DOKS, GKE, AKS) with robust CI/CD pipelines.
 
 ### IX. Test-Driven Development (TDD)
 Tests define the success criteria before code is written.
