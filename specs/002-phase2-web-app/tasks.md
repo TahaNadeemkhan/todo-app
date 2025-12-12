@@ -154,27 +154,27 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Frontend: Registration Page
 
-- [ ] T040 [US1] Create registration page structure in `todo_app/phase_2/frontend/app/register/page.tsx`
-- [ ] T041 [US1] Implement registration form with email/password fields in `todo_app/phase_2/frontend/app/register/page.tsx`
-- [ ] T042 [US1] Add client-side validation (email format, password length) in `todo_app/phase_2/frontend/app/register/page.tsx`
-- [ ] T043 [US1] Connect form to Better Auth signUp in `todo_app/phase_2/frontend/app/register/page.tsx`
-- [ ] T044 [US1] Add loading state and error handling in `todo_app/phase_2/frontend/app/register/page.tsx`
-- [ ] T045 [US1] Add redirect to login after successful registration in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T040 [US1] Create registration page structure in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T041 [US1] Implement registration form with email/password fields in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T042 [US1] Add client-side validation (email format, password length) in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T043 [US1] Connect form to Better Auth signUp in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T044 [US1] Add loading state and error handling in `todo_app/phase_2/frontend/app/register/page.tsx`
+- [x] T045 [US1] Add redirect to login after successful registration in `todo_app/phase_2/frontend/app/register/page.tsx`
 
 ### Frontend: Login Page
 
-- [ ] T046 [US1] Create login page structure in `todo_app/phase_2/frontend/app/login/page.tsx`
-- [ ] T047 [US1] Implement login form with email/password fields in `todo_app/phase_2/frontend/app/login/page.tsx`
-- [ ] T048 [US1] Connect form to Better Auth signIn in `todo_app/phase_2/frontend/app/login/page.tsx`
-- [ ] T049 [US1] Store JWT token after successful login in `todo_app/phase_2/frontend/lib/auth-client.ts`
-- [ ] T050 [US1] Add redirect to dashboard after login in `todo_app/phase_2/frontend/app/login/page.tsx`
-- [ ] T051 [US1] Add "Create account" link to registration in `todo_app/phase_2/frontend/app/login/page.tsx`
+- [x] T046 [US1] Create login page structure in `todo_app/phase_2/frontend/app/login/page.tsx`
+- [x] T047 [US1] Implement login form with email/password fields in `todo_app/phase_2/frontend/app/login/page.tsx`
+- [x] T048 [US1] Connect form to Better Auth signIn in `todo_app/phase_2/frontend/app/login/page.tsx`
+- [x] T049 [US1] Store JWT token after successful login in `todo_app/phase_2/frontend/lib/auth-client.ts`
+- [x] T050 [US1] Add redirect to dashboard after login in `todo_app/phase_2/frontend/app/login/page.tsx`
+- [x] T051 [US1] Add "Create account" link to registration in `todo_app/phase_2/frontend/app/login/page.tsx`
 
 ### Frontend: Auth Middleware & Protection
 
-- [ ] T052 [US1] Create auth middleware for protected routes in `todo_app/phase_2/frontend/middleware.ts`
-- [ ] T053 [US1] Implement logout functionality in `todo_app/phase_2/frontend/lib/auth-client.ts`
-- [ ] T054 [US1] Add logout button component in `todo_app/phase_2/frontend/components/logout-button.tsx`
+- [x] T052 [US1] Create auth middleware for protected routes in `todo_app/phase_2/frontend/middleware.ts`
+- [x] T053 [US1] Implement logout functionality in `todo_app/phase_2/frontend/lib/auth-client.ts`
+- [x] T054 [US1] Add logout button component in `todo_app/phase_2/frontend/components/logout-button.tsx`
 
 **Checkpoint**: User Story 1 complete - Registration, login, logout working end-to-end
 
@@ -191,23 +191,23 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: List Tasks Endpoint
 
-- [ ] T055 [US2] Create tasks router in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T056 [US2] Implement `GET /api/{user_id}/tasks` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T057 [US2] Add user_id validation (JWT sub must match path) in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T058 [US2] Query tasks filtered by user_id in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T059 [US2] Include tasks router in main app in `todo_app/phase_2/backend/src/todo_app/main.py`
-- [ ] T060 [US2] **VALIDATION**: Test endpoint with curl/httpie using mock JWT
+- [x] T055 [US2] Create tasks router in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T056 [US2] Implement `GET /api/{user_id}/tasks` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T057 [US2] Add user_id validation (JWT sub must match path) in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T058 [US2] Query tasks filtered by user_id in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T059 [US2] Include tasks router in main app in `todo_app/phase_2/backend/src/todo_app/main.py`
+- [x] T060 [US2] **VALIDATION**: Test endpoint with curl/httpie using mock JWT
 
 ### Frontend: Dashboard Page
 
-- [ ] T061 [US2] Create dashboard page structure in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
-- [ ] T062 [US2] Fetch tasks on page load using API client in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
-- [ ] T063 [US2] Create TaskList component in `todo_app/phase_2/frontend/components/task-list.tsx`
-- [ ] T064 [US2] Create TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T065 [US2] Display tasks in a list/table format in `todo_app/phase_2/frontend/components/task-list.tsx`
-- [ ] T066 [US2] Show loading state while fetching in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
-- [ ] T067 [US2] Show empty state when no tasks in `todo_app/phase_2/frontend/components/task-list.tsx`
-- [ ] T068 [US2] Add header with user info and logout button in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T061 [US2] Create dashboard page structure in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T062 [US2] Fetch tasks on page load using API client in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T063 [US2] Create TaskList component in `todo_app/phase_2/frontend/components/task-list.tsx`
+- [x] T064 [US2] Create TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T065 [US2] Display tasks in a list/table format in `todo_app/phase_2/frontend/components/task-list.tsx`
+- [x] T066 [US2] Show loading state while fetching in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T067 [US2] Show empty state when no tasks in `todo_app/phase_2/frontend/components/task-list.tsx`
+- [x] T068 [US2] Add header with user info and logout button in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
 
 **Checkpoint**: User Story 2 complete - Dashboard shows user's tasks
 
@@ -224,23 +224,23 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: Create Task Endpoint
 
-- [ ] T069 [US3] Create TaskCreate schema (title required, description optional) in `todo_app/phase_2/backend/src/todo_app/schemas.py`
-- [ ] T070 [US3] Implement `POST /api/{user_id}/tasks` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T071 [US3] Validate user_id matches JWT in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T072 [US3] Create task with user_id, timestamps in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T073 [US3] Return 201 with created task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T074 [US3] **VALIDATION**: Test endpoint creates task in database
+- [x] T069 [US3] Create TaskCreate schema (title required, description optional) in `todo_app/phase_2/backend/src/todo_app/schemas.py`
+- [x] T070 [US3] Implement `POST /api/{user_id}/tasks` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T071 [US3] Validate user_id matches JWT in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T072 [US3] Create task with user_id, timestamps in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T073 [US3] Return 201 with created task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T074 [US3] **VALIDATION**: Test endpoint creates task in database
 
 ### Frontend: Add Task UI
 
-- [ ] T075 [US3] Create AddTaskDialog component in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T076 [US3] Implement form with title (required) and description (optional) in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T077 [US3] Add client-side validation (title not empty) in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T078 [US3] Connect form to POST API endpoint in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T079 [US3] Add loading state during submission in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T080 [US3] Close dialog and refresh task list on success in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
-- [ ] T081 [US3] Add "Add Task" button to dashboard header in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
-- [ ] T082 [US3] Show toast notification on success/error in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T075 [US3] Create AddTaskDialog component in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T076 [US3] Implement form with title (required) and description (optional) in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T077 [US3] Add client-side validation (title not empty) in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T078 [US3] Connect form to POST API endpoint in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T079 [US3] Add loading state during submission in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T080 [US3] Close dialog and refresh task list on success in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
+- [x] T081 [US3] Add "Add Task" button to dashboard header in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T082 [US3] Show toast notification on success/error in `todo_app/phase_2/frontend/components/add-task-dialog.tsx`
 
 **Checkpoint**: User Story 3 complete - Can add tasks
 

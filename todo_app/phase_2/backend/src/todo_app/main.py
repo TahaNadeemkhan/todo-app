@@ -26,6 +26,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown: Cleanup if needed
 
 
+from todo_app.routes import tasks
+
 app = FastAPI(
     title="Todo App API",
     description="Phase 2 - Full-Stack Web Application API",
@@ -41,6 +43,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(tasks.router)
 
 
 @app.get("/health", tags=["Health"])

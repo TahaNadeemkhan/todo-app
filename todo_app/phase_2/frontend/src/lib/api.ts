@@ -36,9 +36,11 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Redirect to login on authentication failure
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      // DISABLED to prevent infinite loops during debugging
+      // if (typeof window !== "undefined") {
+      //   window.location.href = "/login";
+      // }
+      console.error("API 401 Unauthorized:", error.response.data);
     }
     return Promise.reject(error);
   }

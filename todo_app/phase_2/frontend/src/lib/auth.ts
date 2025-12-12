@@ -5,12 +5,13 @@
 
 import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
+import { Pool } from "pg";
 
 export const auth = betterAuth({
-  database: {
-    type: "postgres",
-    url: process.env.DATABASE_URL!,
-  },
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true, // Neon requires SSL. 'true' is equivalent to sslmode=require
+  }),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,

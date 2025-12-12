@@ -3,11 +3,15 @@ Dependency injection utilities for FastAPI routes.
 """
 
 from typing import Annotated
+import json
 
 import jwt
 from fastapi import Depends, Header, HTTPException, Path, status
+from sqlmodel import Session
 
 from todo_app.config import get_settings
+from todo_app.db import engine
+from todo_app.models import Jwks
 
 settings = get_settings()
 
@@ -17,15 +21,7 @@ async def get_current_user(
 ) -> str:
     """
     Extract and verify JWT token, return user_id.
-
-    Args:
-        authorization: Bearer token from Authorization header
-
-    Returns:
-        User ID extracted from token's 'sub' claim
-
-    Raises:
-        HTTPException: 401 if token is missing, invalid, or expired
+    Supports both HS256 (Shared Secret) and EdDSA/RS256 (JWKS from DB).
     """
     if not authorization:
         raise HTTPException(
@@ -44,11 +40,43 @@ async def get_current_user(
     token = authorization.removeprefix("Bearer ").strip()
 
     try:
-        payload = jwt.decode(
-            token,
-            settings.better_auth_secret,
-            algorithms=["HS256"],
-        )
+        # Inspect Header to determine verification method
+        header = jwt.get_unverified_header(token)
+        
+        alg = header.get("alg")
+        kid = header.get("kid")
+
+        if alg == "HS256":
+            # Use Shared Secret
+            payload = jwt.decode(
+                token,
+                settings.better_auth_secret,
+                algorithms=["HS256"],
+                audience="todo-app-api",
+            )
+        elif kid:
+            # Use Public Key from DB (JWKS)
+            with Session(engine) as session:
+                jwk_record = session.get(Jwks, kid)
+                if not jwk_record:
+                    print(f"DEBUG: Key ID {kid} not found in DB")
+                    raise jwt.InvalidTokenError("Key ID not found")
+                
+                # Parse JWK
+                jwk_data = json.loads(jwk_record.public_key)
+                
+                # Construct PyJWK
+                key = jwt.PyJWK(jwk_data)
+                
+                payload = jwt.decode(
+                    token,
+                    key.key,
+                    algorithms=[alg],
+                    audience="todo-app-api", # Verify audience matches frontend config
+                )
+        else:
+             raise jwt.InvalidTokenError(f"Unsupported algorithm: {alg}")
+
         user_id: str | None = payload.get("sub")
         if not user_id:
             raise HTTPException(
@@ -57,6 +85,7 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return user_id
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,9 +93,17 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError as e:
+        print(f"DEBUG: JWT Invalid: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {e}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        print(f"DEBUG: Unexpected Auth Error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -75,19 +112,6 @@ def validate_user_access(
     user_id: Annotated[str, Path(description="User ID from URL path")],
     current_user: Annotated[str, Depends(get_current_user)],
 ) -> str:
-    """
-    Validate that the authenticated user matches the user_id in the path.
-
-    Args:
-        user_id: User ID from URL path
-        current_user: User ID from JWT token
-
-    Returns:
-        The validated user_id
-
-    Raises:
-        HTTPException: 403 if user_id doesn't match authenticated user
-    """
     if user_id != current_user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
