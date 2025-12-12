@@ -68,22 +68,22 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend Setup
 
-- [ ] T001 Create backend directory structure at `todo_app/phase_2/backend/`
-- [ ] T002 Initialize Python project with `uv init` in `todo_app/phase_2/backend/`
-- [ ] T003 Create `pyproject.toml` with all dependencies in `todo_app/phase_2/backend/pyproject.toml`
-- [ ] T004 [P] Create `__init__.py` files for package structure in `todo_app/phase_2/backend/src/todo_app/`
-- [ ] T005 [P] Create `.env.example` with required variables in `todo_app/phase_2/backend/.env.example`
-- [ ] T006 [P] Create `backend/CLAUDE.md` with backend-specific guidelines in `todo_app/phase_2/backend/CLAUDE.md`
+- [x] T001 Create backend directory structure at `todo_app/phase_2/backend/`
+- [x] T002 Initialize Python project with `uv init` in `todo_app/phase_2/backend/`
+- [x] T003 Create `pyproject.toml` with all dependencies in `todo_app/phase_2/backend/pyproject.toml`
+- [x] T004 [P] Create `__init__.py` files for package structure in `todo_app/phase_2/backend/src/todo_app/`
+- [x] T005 [P] Create `.env.example` with required variables in `todo_app/phase_2/backend/.env.example`
+- [x] T006 [P] Create `backend/CLAUDE.md` with backend-specific guidelines in `todo_app/phase_2/backend/CLAUDE.md`
 
 ### Frontend Setup
 
-- [ ] T007 Initialize Next.js 16+ project with `create-next-app` in `todo_app/phase_2/frontend/`
-- [ ] T008 Configure TypeScript, Tailwind CSS, ESLint in `todo_app/phase_2/frontend/`
-- [ ] T009 [P] Install axios and better-auth dependencies in `todo_app/phase_2/frontend/`
-- [ ] T010 [P] Initialize Shadcn/UI with `npx shadcn-ui@latest init` in `todo_app/phase_2/frontend/`
-- [ ] T011 [P] Add Shadcn components: button, input, card, label, checkbox, dialog, toast in `todo_app/phase_2/frontend/`
-- [ ] T012 [P] Create `.env.local.example` with required variables in `todo_app/phase_2/frontend/.env.local.example`
-- [ ] T013 [P] Create `frontend/CLAUDE.md` with frontend-specific guidelines in `todo_app/phase_2/frontend/CLAUDE.md`
+- [x] T007 Initialize Next.js 16+ project with `create-next-app` in `todo_app/phase_2/frontend/`
+- [x] T008 Configure TypeScript, Tailwind CSS, ESLint in `todo_app/phase_2/frontend/`
+- [x] T009 [P] Install axios and better-auth dependencies in `todo_app/phase_2/frontend/`
+- [x] T010 [P] Initialize Shadcn/UI with `npx shadcn-ui@latest init` in `todo_app/phase_2/frontend/`
+- [x] T011 [P] Add Shadcn components: button, input, card, label, checkbox, dialog, toast in `todo_app/phase_2/frontend/`
+- [x] T012 [P] Create `.env.local.example` with required variables in `todo_app/phase_2/frontend/.env.local.example`
+- [x] T013 [P] Create `frontend/CLAUDE.md` with frontend-specific guidelines in `todo_app/phase_2/frontend/CLAUDE.md`
 
 **Checkpoint**: Both projects should initialize and run without errors
 
@@ -97,42 +97,42 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Database Foundation
 
-- [ ] T014 Create Neon PostgreSQL database on neon.tech
-- [ ] T015 Configure `DATABASE_URL` in `todo_app/phase_2/backend/.env`
-- [ ] T016 Create `config.py` with settings and env loading in `todo_app/phase_2/backend/src/todo_app/config.py`
-- [ ] T017 Create `db.py` with SQLModel engine and session in `todo_app/phase_2/backend/src/todo_app/db.py`
-- [ ] T018 Create `Task` model with SQLModel in `todo_app/phase_2/backend/src/todo_app/models.py`
-- [ ] T019 Add table creation on startup in `todo_app/phase_2/backend/src/todo_app/db.py`
-- [ ] T020 **VALIDATION**: Test database connection with simple query
+- [x] T014 Create Neon PostgreSQL database on neon.tech
+- [x] T015 Configure `DATABASE_URL` in `todo_app/phase_2/backend/.env`
+- [x] T016 Create `config.py` with settings and env loading in `todo_app/phase_2/backend/src/todo_app/config.py`
+- [x] T017 Create `db.py` with SQLModel engine and session in `todo_app/phase_2/backend/src/todo_app/db.py`
+- [x] T018 Create `Task` model with SQLModel in `todo_app/phase_2/backend/src/todo_app/models.py`
+- [x] T019 Add table creation on startup in `todo_app/phase_2/backend/src/todo_app/db.py`
+- [x] T020 **VALIDATION**: Test database connection with simple query
 
 ### FastAPI Foundation
 
-- [ ] T021 Create `main.py` FastAPI application entry in `todo_app/phase_2/backend/src/todo_app/main.py`
-- [ ] T022 Configure CORS middleware for frontend origin in `todo_app/phase_2/backend/src/todo_app/main.py`
-- [ ] T023 [P] Create health check endpoint `GET /health` in `todo_app/phase_2/backend/src/todo_app/main.py`
-- [ ] T024 [P] Create `routes/__init__.py` package file in `todo_app/phase_2/backend/src/todo_app/routes/__init__.py`
-- [ ] T025 **VALIDATION**: Run backend with `uvicorn` and verify `/health` responds
+- [x] T021 Create `main.py` FastAPI application entry in `todo_app/phase_2/backend/src/todo_app/main.py`
+- [x] T022 Configure CORS middleware for frontend origin in `todo_app/phase_2/backend/src/todo_app/main.py`
+- [x] T023 [P] Create health check endpoint `GET /health` in `todo_app/phase_2/backend/src/todo_app/main.py`
+- [x] T024 [P] Create `routes/__init__.py` package file in `todo_app/phase_2/backend/src/todo_app/routes/__init__.py`
+- [x] T025 **VALIDATION**: Run backend with `uvicorn` and verify `/health` responds
 
 ### JWT/Auth Foundation (Backend)
 
-- [ ] T026 Create `deps.py` with dependency injection utilities in `todo_app/phase_2/backend/src/todo_app/deps.py`
-- [ ] T027 Implement `get_current_user` JWT verification dependency in `todo_app/phase_2/backend/src/todo_app/deps.py`
-- [ ] T028 Implement user_id path validation helper in `todo_app/phase_2/backend/src/todo_app/deps.py`
-- [ ] T029 **VALIDATION**: Test JWT verification with a mock token
+- [x] T026 Create `deps.py` with dependency injection utilities in `todo_app/phase_2/backend/src/todo_app/deps.py`
+- [x] T027 Implement `get_current_user` JWT verification dependency in `todo_app/phase_2/backend/src/todo_app/deps.py`
+- [x] T028 Implement user_id path validation helper in `todo_app/phase_2/backend/src/todo_app/deps.py`
+- [x] T029 **VALIDATION**: Test JWT verification with a mock token
 
 ### Better Auth Foundation (Frontend)
 
-- [ ] T030 Configure Better Auth with JWT plugin in `todo_app/phase_2/frontend/lib/auth.ts`
-- [ ] T031 Create auth client wrapper in `todo_app/phase_2/frontend/lib/auth-client.ts`
-- [ ] T032 Create API client with axios and interceptors in `todo_app/phase_2/frontend/lib/api.ts`
-- [ ] T033 Create auth context/provider for React in `todo_app/phase_2/frontend/lib/auth-provider.tsx`
-- [ ] T034 **VALIDATION**: Verify Better Auth can be imported without errors
+- [x] T030 Configure Better Auth with JWT plugin in `todo_app/phase_2/frontend/lib/auth.ts`
+- [x] T031 Create auth client wrapper in `todo_app/phase_2/frontend/lib/auth-client.ts`
+- [x] T032 Create API client with axios and interceptors in `todo_app/phase_2/frontend/lib/api.ts`
+- [x] T033 Create auth context/provider for React in `todo_app/phase_2/frontend/lib/auth-provider.tsx`
+- [x] T034 **VALIDATION**: Verify Better Auth can be imported without errors
 
 ### Shared Infrastructure
 
-- [ ] T035 [P] Create TypeScript interfaces for Task type in `todo_app/phase_2/frontend/lib/types.ts`
-- [ ] T036 [P] Create Pydantic schemas for API request/response in `todo_app/phase_2/backend/src/todo_app/schemas.py`
-- [ ] T037 Create root layout with auth provider in `todo_app/phase_2/frontend/app/layout.tsx`
+- [x] T035 [P] Create TypeScript interfaces for Task type in `todo_app/phase_2/frontend/lib/types.ts`
+- [x] T036 [P] Create Pydantic schemas for API request/response in `todo_app/phase_2/backend/src/todo_app/schemas.py`
+- [x] T037 Create root layout with auth provider in `todo_app/phase_2/frontend/app/layout.tsx`
 
 **Checkpoint**: Foundation ready - Backend runs, DB connects, auth utilities ready
 
@@ -149,8 +149,8 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: Auth API Route (Better Auth handles user storage)
 
-- [ ] T038 [US1] Create Better Auth API route handler in `todo_app/phase_2/frontend/app/api/auth/[...all]/route.ts`
-- [ ] T039 [US1] Configure Better Auth server with JWT and email/password in `todo_app/phase_2/frontend/lib/auth.ts`
+- [x] T038 [US1] Create Better Auth API route handler in `todo_app/phase_2/frontend/app/api/auth/[...all]/route.ts`
+- [x] T039 [US1] Configure Better Auth server with JWT and email/password in `todo_app/phase_2/frontend/lib/auth.ts`
 
 ### Frontend: Registration Page
 
