@@ -257,21 +257,21 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: Update Task Endpoint
 
-- [ ] T083 [US4] Create TaskUpdate schema (optional title, description) in `todo_app/phase_2/backend/src/todo_app/schemas.py`
-- [ ] T084 [US4] Implement `GET /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T085 [US4] Implement `PUT /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T086 [US4] Validate task belongs to user (404 if not found or wrong user) in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T087 [US4] Update only provided fields, update `updated_at` in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T088 [US4] Return 200 with updated task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T083 [US4] Create TaskUpdate schema (optional title, description) in `todo_app/phase_2/backend/src/todo_app/schemas.py`
+- [x] T084 [US4] Implement `GET /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T085 [US4] Implement `PUT /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T086 [US4] Validate task belongs to user (404 if not found or wrong user) in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T087 [US4] Update only provided fields, update `updated_at` in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T088 [US4] Return 200 with updated task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
 
 ### Frontend: Edit Task UI
 
-- [ ] T089 [US4] Create EditTaskDialog component in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
-- [ ] T090 [US4] Pre-fill form with existing task data in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
-- [ ] T091 [US4] Connect form to PUT API endpoint in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
-- [ ] T092 [US4] Add edit button to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T093 [US4] Refresh task list on successful update in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
-- [ ] T094 [US4] Show toast notification on success/error in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
+- [x] T089 [US4] Create EditTaskDialog component in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
+- [x] T090 [US4] Pre-fill form with existing task data in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
+- [x] T091 [US4] Connect form to PUT API endpoint in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
+- [x] T092 [US4] Add edit button to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T093 [US4] Refresh task list on successful update in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
+- [x] T094 [US4] Show toast notification on success/error in `todo_app/phase_2/frontend/components/edit-task-dialog.tsx`
 
 **Checkpoint**: User Story 4 complete - Can edit tasks
 
@@ -288,18 +288,18 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: Delete Task Endpoint
 
-- [ ] T095 [US5] Implement `DELETE /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T096 [US5] Validate task belongs to user in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T097 [US5] Delete task from database in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T098 [US5] Return 204 No Content on success in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T095 [US5] Implement `DELETE /api/{user_id}/tasks/{id}` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T096 [US5] Validate task belongs to user in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T097 [US5] Delete task from database in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T098 [US5] Return 204 No Content on success in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
 
 ### Frontend: Delete Task UI
 
-- [ ] T099 [US5] Add delete button to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T100 [US5] Create DeleteConfirmDialog component in `todo_app/phase_2/frontend/components/delete-confirm-dialog.tsx`
-- [ ] T101 [US5] Connect delete to DELETE API endpoint in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T102 [US5] Remove task from list on successful deletion in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
-- [ ] T103 [US5] Show toast notification on success/error in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T099 [US5] Add delete button to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T100 [US5] Create DeleteConfirmDialog component in `todo_app/phase_2/frontend/components/delete-confirm-dialog.tsx`
+- [x] T101 [US5] Connect delete to DELETE API endpoint in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T102 [US5] Remove task from list on successful deletion in `todo_app/phase_2/frontend/app/dashboard/page.tsx`
+- [x] T103 [US5] Show toast notification on success/error in `todo_app/phase_2/frontend/components/task-item.tsx`
 
 **Checkpoint**: User Story 5 complete - Can delete tasks
 
@@ -316,18 +316,18 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend: Toggle Complete Endpoint
 
-- [ ] T104 [US6] Implement `PATCH /api/{user_id}/tasks/{id}/complete` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T105 [US6] Toggle `completed` boolean value in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T106 [US6] Update `updated_at` timestamp in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
-- [ ] T107 [US6] Return 200 with updated task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T104 [US6] Implement `PATCH /api/{user_id}/tasks/{id}/complete` endpoint in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T105 [US6] Toggle `completed` boolean value in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T106 [US6] Update `updated_at` timestamp in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
+- [x] T107 [US6] Return 200 with updated task in `todo_app/phase_2/backend/src/todo_app/routes/tasks.py`
 
 ### Frontend: Completion Toggle UI
 
-- [ ] T108 [US6] Add checkbox to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T109 [US6] Connect checkbox to PATCH API endpoint in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T110 [US6] Show strikethrough for completed tasks in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T111 [US6] Optimistic UI update for instant feedback in `todo_app/phase_2/frontend/components/task-item.tsx`
-- [ ] T112 [US6] Rollback on API error in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T108 [US6] Add checkbox to TaskItem component in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T109 [US6] Connect checkbox to PATCH API endpoint in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T110 [US6] Show strikethrough for completed tasks in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T111 [US6] Optimistic UI update for instant feedback in `todo_app/phase_2/frontend/components/task-item.tsx`
+- [x] T112 [US6] Rollback on API error in `todo_app/phase_2/frontend/components/task-item.tsx`
 
 **Checkpoint**: User Story 6 complete - Can toggle task completion
 

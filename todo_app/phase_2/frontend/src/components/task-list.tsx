@@ -5,9 +5,11 @@ import { TaskItem } from "./task-item";
 
 interface TaskListProps {
   tasks: Task[];
+  onTaskUpdated: (task: Task) => void;
+  onTaskDeleted: (taskId: number) => void;
 }
 
-export function TaskList({ tasks }: TaskListProps) {
+export function TaskList({ tasks, onTaskUpdated, onTaskDeleted }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 text-gray-500">
@@ -19,7 +21,12 @@ export function TaskList({ tasks }: TaskListProps) {
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} />
+        <TaskItem 
+          key={task.id} 
+          task={task} 
+          onUpdate={onTaskUpdated} 
+          onDelete={onTaskDeleted}
+        />
       ))}
     </div>
   );

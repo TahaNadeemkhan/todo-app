@@ -37,6 +37,14 @@ export default function DashboardPage() {
     setTasks([task, ...tasks]);
   };
 
+  const handleTaskUpdated = (updatedTask: Task) => {
+    setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+  };
+
+  const handleTaskDeleted = (taskId: number) => {
+    setTasks(tasks.filter((t) => t.id !== taskId));
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center">Loading tasks...</div>;
   }
@@ -54,7 +62,11 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <TaskList tasks={tasks} />
+        <TaskList 
+          tasks={tasks} 
+          onTaskUpdated={handleTaskUpdated} 
+          onTaskDeleted={handleTaskDeleted} 
+        />
       </main>
     </div>
   );
