@@ -19,3 +19,7 @@
 - Typed Python (3.12+)
 - Pydantic models for all I/O
 - No circular imports
+
+## Future Considerations
+- Rate Limiting: Implement `slowapi` or similar middleware for API protection.
+- Monitoring: Add OpenTelemetry/Prometheus.

@@ -339,28 +339,28 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Error Handling
 
-- [ ] T113 [P] Add global error boundary in `todo_app/phase_2/frontend/app/error.tsx`
-- [ ] T114 [P] Add 404 page in `todo_app/phase_2/frontend/app/not-found.tsx`
-- [ ] T115 [P] Add loading.tsx for suspense in `todo_app/phase_2/frontend/app/loading.tsx`
-- [ ] T116 [P] Implement consistent error responses in backend in `todo_app/phase_2/backend/src/todo_app/main.py`
+- [x] T113 [P] Add global error boundary in `todo_app/phase_2/frontend/app/error.tsx`
+- [x] T114 [P] Add 404 page in `todo_app/phase_2/frontend/app/not-found.tsx`
+- [x] T115 [P] Add loading.tsx for suspense in `todo_app/phase_2/frontend/app/loading.tsx`
+- [x] T116 [P] Implement consistent error responses in backend in `todo_app/phase_2/backend/src/todo_app/main.py`
 
 ### Security Hardening
 
-- [ ] T117 [P] Verify no secrets in code (use env vars only) in all files
-- [ ] T118 [P] Add input sanitization for task title/description in `todo_app/phase_2/backend/src/todo_app/schemas.py`
-- [ ] T119 [P] Add rate limiting consideration (document for future) in `todo_app/phase_2/backend/CLAUDE.md`
+- [x] T117 [P] Verify no secrets in code (use env vars only) in all files
+- [x] T118 [P] Add input sanitization for task title/description in `todo_app/phase_2/backend/src/todo_app/schemas.py`
+- [x] T119 [P] Add rate limiting consideration (document for future) in `todo_app/phase_2/backend/CLAUDE.md`
 
 ### Documentation
 
-- [ ] T120 [P] Update README.md with setup instructions in `README.md`
-- [ ] T121 [P] Document API endpoints in `specs/002-phase2-web-app/api-docs.md`
-- [ ] T122 [P] Add environment variables documentation in `todo_app/phase_2/backend/.env.example`
+- [x] T120 [P] Update README.md with setup instructions in `README.md`
+- [x] T121 [P] Document API endpoints in `specs/002-phase2-web-app/api-docs.md`
+- [x] T122 [P] Add environment variables documentation in `todo_app/phase_2/backend/.env.example`
 
 ### Home Page
 
-- [ ] T123 Create home page with redirect logic in `todo_app/phase_2/frontend/app/page.tsx`
-- [ ] T124 Redirect authenticated users to dashboard in `todo_app/phase_2/frontend/app/page.tsx`
-- [ ] T125 Redirect unauthenticated users to login in `todo_app/phase_2/frontend/app/page.tsx`
+- [x] T123 Create home page with redirect logic in `todo_app/phase_2/frontend/app/page.tsx`
+- [x] T124 Redirect authenticated users to dashboard in `todo_app/phase_2/frontend/app/page.tsx`
+- [x] T125 Redirect unauthenticated users to login in `todo_app/phase_2/frontend/app/page.tsx`
 
 **Checkpoint**: Polish complete - App is production-ready
 
@@ -372,8 +372,8 @@ This task list implements a **vertical slice approach** with risk mitigation pat
 
 ### Backend Deployment
 
-- [ ] T126 Create `Dockerfile` for backend in `todo_app/phase_2/backend/Dockerfile`
-- [ ] T127 [P] Create `docker-compose.yml` for local development in `todo_app/phase_2/docker-compose.yml`
+- [x] T126 Create `Dockerfile` for backend in `todo_app/phase_2/backend/Dockerfile`
+- [x] T127 [P] Create `docker-compose.yml` for local development in `todo_app/phase_2/docker-compose.yml`
 - [ ] T128 Deploy backend to Railway/Render/Fly.io
 - [ ] T129 Configure production environment variables
 - [ ] T130 **VALIDATION**: Test production API endpoints

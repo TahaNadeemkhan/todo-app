@@ -1,77 +1,60 @@
-# Todo App (CLI)
+# Todo App
 
-A modern, interactive Command-Line Interface (CLI) for managing your tasks, built with Python and Rich.
-
-> [!NOTE]
-> This project is the Phase 1 implementation for the "Hackathon II - Todo Spec-Driven Development" challenge.
+A multi-phase project evolving from a CLI to a Cloud-Native Web App.
 
 ---
 
-## ✨ Features
+## Phase 2: Full-Stack Web App
 
-- **Interactive Shell:** A user-friendly REPL (`todo>`) for managing tasks.
-- **Full CRUD:** Add, list, update, complete, and delete tasks.
-- **Rich UI:** Beautifully formatted tables, panels, and prompts powered by the `rich` library.
-- **Task Priorities:** Assign High, Medium, or Low priority to tasks.
-- **Undo Functionality:** Instantly undo the last action (add, update, delete, complete).
-- **Audit History:** View a complete log of all actions taken during the session.
-- **Short ID Support:** Interact with tasks using convenient 8-character short IDs.
-- **Data Persistence:** In-memory storage for the current session.
+A modern task management application featuring a Next.js frontend and FastAPI backend with secure authentication and PostgreSQL storage.
 
-## 🛠️ Tech Stack
+### ✨ Features
+- **Authentication:** Secure Signup/Login using Better Auth and JWT.
+- **Task Management:** Create, Read, Update, Delete tasks.
+- **Modern UI:** Built with Shadcn/UI and Tailwind CSS.
+- **Secure Backend:** FastAPI with Pydantic validation and SQLModel.
 
-- **Language:** Python 3.12+
-- **Package Management:** `uv`
-- **Core Libraries:**
-  - `rich` for all terminal UI.
-  - `pydantic` for data validation and models.
-- **Testing:** `pytest` and `pytest-cov`
-- **Architecture:** Follows a clean, decoupled Service -> Repository pattern.
-- **Development:** Built using a strict Test-Driven Development (TDD) workflow.
+### 🚀 Getting Started
 
-## 🚀 Getting Started
+#### Prerequisites
+- Node.js 20+
+- Python 3.12+
+- `uv` package manager
+- PostgreSQL Database (Neon DB recommended)
 
-### Prerequisites
+#### 1. Backend Setup
+```bash
+cd todo_app/phase_2/backend
+uv sync
+cp .env.example .env
+# Edit .env: Set DATABASE_URL and BETTER_AUTH_SECRET
+uv run uvicorn src.todo_app.main:app --reload --port 8000
+```
 
-- Python 3.12 or higher
-- `uv` package manager (`pip install uv`)
+#### 2. Frontend Setup
+```bash
+cd todo_app/phase_2/frontend
+npm install
+cp .env.local.example .env.local
+# Edit .env.local: Copy values from backend .env
+# Run Migration (First time only)
+node migrate-postgres.mjs
+npm run dev
+```
 
-### Installation & Running
+#### 3. Usage
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/TahaNadeemkhan/todo-app.git
-    cd todo-app
-    ```
+---
 
-2.  **Navigate to the project directory:**
-    ```bash
-    cd todo_app/phase_1
-    ```
+## Phase 1: CLI Console App
 
-3.  **Install dependencies:**
-    ```bash
-    uv sync
-    ```
+A robust command-line interface for managing tasks locally.
 
-4.  **Run the application:**
-    The app can be run in interactive mode or by passing a one-shot command.
+### 🚀 Getting Started
 
-    *   **Interactive Mode:**
-        ```bash
-        uv run python -m todo_app.main
-        ```
-    *   **One-shot Command:**
-        ```bash
-        uv run python -m todo_app.main list
-        ```
-
-## 🧪 Running Tests
-
-To run the full unit test suite and generate a coverage report:
-
-1.  Navigate to the project directory: `cd todo_app/phase_1`
-2.  Run the test command:
-    ```bash
-    uv run pytest --cov=src/todo_app
-    ```
+```bash
+cd todo_app/phase_1
+uv sync
+uv run python -m todo_app.main
+```

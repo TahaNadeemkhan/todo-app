@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Copy dependency files
+COPY pyproject.toml .
+COPY uv.lock .
+
+# Install dependencies
+RUN uv sync --frozen --no-cache
+
+# Copy source code
+COPY src src
+COPY README.md .
+
+# Run the application
+CMD ["uv", "run", "uvicorn", "src.todo_app.main:app", "--host", "0.0.0.0", "--port", "8000"]
