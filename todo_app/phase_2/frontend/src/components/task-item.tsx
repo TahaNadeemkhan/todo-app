@@ -123,28 +123,28 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
               </div>
               
               {task.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{task.description}</p>
+                <p className="text-sm text-foreground/70 dark:text-foreground/60 leading-relaxed">{task.description}</p>
               )}
               
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 {task.priority && (
-                  <div className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
-                    task.priority === 'high' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                    task.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-                    'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                  <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                    task.priority === 'high' ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30' :
+                    task.priority === 'medium' ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30' :
+                    'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
                   }`}>
                     <Flag className="w-3 h-3" />
                     <span className="capitalize">{task.priority}</span>
                   </div>
                 )}
                 {task.due_date && (
-                  <div className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
+                  <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
                     isDueSoon()
-                      ? 'bg-orange-500/20 text-orange-600 border-orange-500/30 animate-pulse'
-                      : 'text-muted-foreground/70 bg-white/10 border-white/10'
+                      ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30 animate-pulse'
+                      : 'text-foreground/70 dark:text-foreground/60 bg-muted/50 border-border'
                   }`}>
                     <CalendarIcon className="w-3 h-3" />
-                    <span className="font-medium">
+                    <span>
                       Due: {new Date(task.due_date).toLocaleDateString()}
                       {(() => {
                         const date = new Date(task.due_date);
@@ -169,9 +169,9 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                     <span className="font-medium">Due Soon!</span>
                   </motion.div>
                 )}
-                <div className="flex items-center gap-1 text-xs text-muted-foreground/60 ml-auto">
+                <div className="flex items-center gap-1.5 text-xs text-foreground/50 dark:text-foreground/40 ml-auto bg-muted/30 px-2 py-1 rounded-full">
                   <Clock className="w-3 h-3" />
-                  <span>
+                  <span className="font-medium">
                     Created {new Date(task.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 </div>

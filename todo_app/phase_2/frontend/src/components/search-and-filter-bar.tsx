@@ -30,26 +30,27 @@ export function SearchAndFilterBar({
   taskCount = 0,
 }: SearchAndFilterBarProps) {
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-4 mb-6 p-4 bg-card/80 dark:bg-card/90 rounded-xl border border-border shadow-sm">
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60" />
         <Input
           type="text"
           placeholder="Search tasks by title or description..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 h-12 bg-card/50 backdrop-blur-sm border-border/50
-                     focus:ring-2 focus:ring-primary/20 transition-all
-                     placeholder:text-muted-foreground/60"
+          className="pl-10 h-12 bg-background/80 dark:bg-background/50 border-border
+                     text-foreground font-medium
+                     focus:ring-2 focus:ring-primary/30 transition-all
+                     placeholder:text-foreground/40"
         />
       </div>
 
       {/* Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">
+          <Filter className="h-4 w-4 text-foreground/60" />
+          <span className="text-sm font-semibold text-foreground">
             Filters:
           </span>
         </div>
@@ -61,13 +62,13 @@ export function SearchAndFilterBar({
               value={statusFilter}
               onValueChange={onStatusFilterChange}
             >
-              <SelectTrigger className="h-10 bg-card/50 backdrop-blur-sm border-border/50">
+              <SelectTrigger className="h-10 bg-background/80 dark:bg-background/50 border-border text-foreground font-medium">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Tasks</SelectItem>
-                <SelectItem value="incomplete">Incomplete</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="all" className="text-foreground font-medium">All Tasks</SelectItem>
+                <SelectItem value="incomplete" className="text-foreground font-medium">Incomplete</SelectItem>
+                <SelectItem value="completed" className="text-foreground font-medium">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -78,24 +79,24 @@ export function SearchAndFilterBar({
               value={priorityFilter}
               onValueChange={onPriorityFilterChange}
             >
-              <SelectTrigger className="h-10 bg-card/50 backdrop-blur-sm border-border/50">
+              <SelectTrigger className="h-10 bg-background/80 dark:bg-background/50 border-border text-foreground font-medium">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="high">
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="all" className="text-foreground font-medium">All Priorities</SelectItem>
+                <SelectItem value="high" className="text-foreground font-medium">
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500" />
                     High
                   </span>
                 </SelectItem>
-                <SelectItem value="medium">
+                <SelectItem value="medium" className="text-foreground font-medium">
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-500" />
                     Medium
                   </span>
                 </SelectItem>
-                <SelectItem value="low">
+                <SelectItem value="low" className="text-foreground font-medium">
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     Low
@@ -108,7 +109,7 @@ export function SearchAndFilterBar({
 
         {/* Result Count */}
         {taskCount > 0 && (
-          <div className="text-sm text-muted-foreground whitespace-nowrap">
+          <div className="text-sm font-semibold text-foreground/80 whitespace-nowrap bg-primary/10 px-3 py-1 rounded-full">
             {taskCount} {taskCount === 1 ? "task" : "tasks"}
           </div>
         )}

@@ -10,10 +10,13 @@ import { Pool } from "pg";
 export const auth = betterAuth({
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: true, // Neon requires SSL
-    max: 2, // Limit pool size to prevent connection exhaustion in serverless/dev envs
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    ssl: {
+      rejectUnauthorized: false, // Allow self-signed certs for Neon
+    },
+    max: 3, // Slightly larger pool
+    idleTimeoutMillis: 60000, // 60 seconds idle timeout
+    connectionTimeoutMillis: 30000, // 30 seconds connection timeout (increased)
+    keepAlive: true, // Keep connection alive
   }),
   emailAndPassword: {
     enabled: true,

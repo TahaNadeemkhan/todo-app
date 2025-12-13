@@ -3,12 +3,26 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useSession } from "@/lib/auth-client";
-import { ArrowRight, CheckCircle, Zap, Shield, Layout } from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ArrowRight, CheckCircle, Zap, Shield, Layout, LogIn, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LandingPage() {
   const { data: session, isLoading } = useSession();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden relative">
@@ -32,15 +46,31 @@ export default function LandingPage() {
             {isLoading ? (
               <div className="h-9 w-24 bg-muted/20 animate-pulse rounded-full" />
             ) : session ? (
-              <Button asChild className="rounded-full shadow-lg hover:shadow-primary/25 bg-gradient-to-r from-primary to-purple-600 border-0">
-                <Link href="/dashboard">
-                  Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <>
+                <span className="text-sm font-medium text-foreground/70 hidden sm:block">
+                  {session.user.name || session.user.email}
+                </span>
+                <Button asChild className="rounded-full shadow-lg hover:shadow-primary/25 bg-gradient-to-r from-primary to-purple-600 border-0">
+                  <Link href="/dashboard">
+                    Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  title="Log out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
             ) : (
               <>
-                <Button variant="ghost" asChild className="hidden sm:inline-flex rounded-full hover:bg-white/10">
-                  <Link href="/login">Sign In</Link>
+                <Button variant="ghost" asChild className="hidden sm:inline-flex rounded-full hover:bg-white/10 text-foreground font-medium">
+                  <Link href="/login" className="flex items-center gap-2">
+                    <LogIn className="w-4 h-4" /> Sign In
+                  </Link>
                 </Button>
                 <Button asChild className="rounded-full shadow-lg hover:shadow-primary/25 bg-gradient-to-r from-primary to-purple-600 border-0">
                   <Link href="/register">Get Started</Link>
