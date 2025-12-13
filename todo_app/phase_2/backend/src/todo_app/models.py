@@ -17,6 +17,11 @@ class Task(SQLModel, table=True):
     title: str = Field(nullable=False, max_length=255)
     description: str | None = Field(default=None, max_length=2000)
     completed: bool = Field(default=False)
+    
+    # New Fields for US9
+    due_date: datetime | None = Field(default=None)
+    priority: str = Field(default="medium", max_length=20)
+
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,

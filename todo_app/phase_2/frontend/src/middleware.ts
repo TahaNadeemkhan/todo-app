@@ -2,33 +2,27 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Check for session cookie
-  // Note: better-auth uses 'better-auth.session_token' by default
-  // const sessionToken = request.cookies.get('better-auth.session_token')
+  const sessionToken = request.cookies.get('better-auth.session_token')
 
-  // TEMPORARILY DISABLED due to infinite redirect loop on localhost
-  // The cookie might be Secure-only or not readable by middleware in this specific env
-  // Client-side protection in the pages handles the redirects fine for now.
-
-  /*
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!sessionToken) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  // If trying to access a protected route without a token, redirect to login
+  if (!sessionToken) {
+    // Keep the original requested path so the user is redirected back after login
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('callbackUrl', request.nextUrl.pathname)
+    return NextResponse.redirect(url)
   }
-
-  // Redirect authenticated users away from login/register
-  if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
-    if (sessionToken) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
-  */
 
   return NextResponse.next()
 }
 
+// Apply this middleware only to the authenticated routes
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: [
+    '/dashboard/:path*', 
+    '/today/:path*', 
+    '/upcoming/:path*', 
+    '/completed/:path*',
+    '/settings/:path*'
+  ],
 }

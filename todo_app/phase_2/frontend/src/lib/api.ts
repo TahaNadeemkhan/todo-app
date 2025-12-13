@@ -6,7 +6,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { getAuthToken } from "./auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Default to 127.0.0.1 to avoid localhost IPv4/IPv6 resolution issues
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

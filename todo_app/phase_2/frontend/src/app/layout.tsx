@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-provider";
 import "./globals.css";
 
+import { PageTransitionWrapper } from "@/components/page-transition-wrapper"; // New import
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -15,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Todo App - Phase 2",
-  description: "Full-Stack Todo Application with Authentication",
+  title: "iTasks - Phase 2",
+  description: "iTasks: Organize your life with elegance.",
 };
 
 export default function RootLayout({
@@ -29,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Toaster />
         <AuthProvider>
-          {children}
-          <Toaster />
+          <PageTransitionWrapper>
+            {children}
+          </PageTransitionWrapper>
         </AuthProvider>
       </body>
     </html>

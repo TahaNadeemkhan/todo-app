@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from todo_app.db import get_session
 from todo_app.deps import ValidatedUserId
 from todo_app.models import Task
-from todo_app.schemas import TaskResponse, TaskCreate, TaskUpdate
+from todo_app.schemas import TaskResponse, TaskCreate, TaskUpdate, Priority
 
 router = APIRouter(prefix="/api", tags=["tasks"])
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -17,11 +17,26 @@ SessionDep = Annotated[Session, Depends(get_session)]
 async def list_tasks(
     user_id: ValidatedUserId,
     session: SessionDep,
+    completed: bool | None = None,
+    priority: Priority | None = None,
+    due_date_start: datetime | None = None,
+    due_date_end: datetime | None = None,
 ) -> Sequence[Task]:
     """
-    List all tasks for a specific user.
+    List all tasks for a specific user with optional filters.
     """
-    statement = select(Task).where(Task.user_id == user_id).order_by(Task.created_at.desc())
+    statement = select(Task).where(Task.user_id == user_id)
+    
+    if completed is not None:
+        statement = statement.where(Task.completed == completed)
+    if priority is not None:
+        statement = statement.where(Task.priority == priority)
+    if due_date_start is not None:
+        statement = statement.where(Task.due_date >= due_date_start)
+    if due_date_end is not None:
+        statement = statement.where(Task.due_date <= due_date_end)
+
+    statement = statement.order_by(Task.created_at.desc())
     tasks = session.exec(statement).all()
     return tasks
 
@@ -102,6 +117,7 @@ async def complete_task(
     user_id: ValidatedUserId,
     task_id: int,
     session: SessionDep,
+    # No input needed, just toggle
 ) -> Task:
     """
     Toggle task completion status.

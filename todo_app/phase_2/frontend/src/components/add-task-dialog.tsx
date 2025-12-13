@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Task } from "@/lib/types";
+import { Plus } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface AddTaskDialogProps {
   onTaskAdded: (task: Task) => void;
@@ -27,10 +29,19 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to add tasks");
+      return;
+    }
+
     if (!title.trim()) {
       toast.error("Title is required");
       return;
@@ -38,14 +49,31 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post<Task>(`/api/${session?.user?.id}/tasks`, {
+      // Combine date and time if both provided
+      let dueDateTimeISO: string | undefined = undefined;
+      if (dueDate) {
+        if (dueTime) {
+          // Combine date + time
+          dueDateTimeISO = new Date(`${dueDate}T${dueTime}`).toISOString();
+        } else {
+          // Date only - set to start of day
+          dueDateTimeISO = new Date(dueDate).toISOString();
+        }
+      }
+
+      const response = await apiClient.post<Task>(`/api/${session.user.id}/tasks`, {
         title,
         description: description || undefined,
+        priority,
+        due_date: dueDateTimeISO,
       });
       onTaskAdded(response.data);
       setOpen(false);
       setTitle("");
       setDescription("");
+      setPriority("medium");
+      setDueDate("");
+      setDueTime("");
       toast.success("Task created");
     } catch (error) {
       console.error("Failed to create task", error);
@@ -58,9 +86,13 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add Task</Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button className="rounded-full shadow-lg hover:shadow-primary/40 bg-gradient-to-r from-primary to-purple-600 border-0 transition-all duration-300">
+            <Plus className="mr-2 h-4 w-4" /> Add Task
+          </Button>
+        </motion.div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-white/20 shadow-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Task</DialogTitle>
@@ -69,34 +101,68 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Title
-              </Label>
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="col-span-3"
                 required
+                className="bg-white/50 border-white/20 focus:border-primary/50 transition-all"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Desc
-              </Label>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3"
                 placeholder="Optional"
+                className="bg-white/50 border-white/20 focus:border-primary/50 transition-all"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="priority">Priority</Label>
+              <select
+                id="priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as any)}
+                className="flex h-9 w-full items-center justify-between rounded-md border border-white/20 bg-white/50 px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="bg-white/50 border-white/20 focus:border-primary/50 transition-all"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dueTime" className="flex items-center gap-1">
+                  Due Time <span className="text-xs text-muted-foreground">(Optional)</span>
+                </Label>
+                <Input
+                  id="dueTime"
+                  type="time"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                  disabled={!dueDate}
+                  className="bg-white/50 border-white/20 focus:border-primary/50 transition-all disabled:opacity-50"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save task"}
+            <Button type="submit" disabled={isLoading} className="w-full rounded-full">
+              {isLoading ? "Saving..." : "Save Task"}
             </Button>
           </DialogFooter>
         </form>
