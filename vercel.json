@@ -1,7 +1,8 @@
 {
-  "buildCommand": "cd todo_app/phase_2/frontend && npm install && npm run build",
+  "installCommand": "cd todo_app/phase_2/frontend && npm install",
+  "buildCommand": "cd todo_app/phase_2/frontend && npm run build",
   "outputDirectory": "todo_app/phase_2/frontend/.next",
-  "framework": "nextjs",
+  "framework": null,
   "functions": {
     "api/index.py": {
       "runtime": "@vercel/python@4.3.1"
