@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ArrowRight, CheckCircle, Zap, Shield, Layout, LogIn, LogOut } from "lucide-react";
 
 export default function LandingPage() {
-  const { data: session, isLoading } = useSession();
+  const { data: session, isPending: isLoading } = useSession();
   const router = useRouter();
 
   const handleLogout = async () => {

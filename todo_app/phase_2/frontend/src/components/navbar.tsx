@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
-  const { data: session, isLoading } = useSession(); // Added isLoading
+  const { data: session, isPending: isLoading } = useSession();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
