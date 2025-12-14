@@ -1,0 +1,16 @@
+{
+  "buildCommand": "cd todo_app/phase_2/frontend && npm install && npm run build",
+  "outputDirectory": "todo_app/phase_2/frontend/.next",
+  "framework": "nextjs",
+  "functions": {
+    "todo_app/phase_2/backend/api/index.py": {
+      "runtime": "python3.12"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/todo_app/phase_2/backend/api/index.py"
+    }
+  ]
+}

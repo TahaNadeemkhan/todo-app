@@ -1,7 +1,13 @@
 """
 Vercel Serverless Function Entry Point
 """
-from src.todo_app.main import app
+import sys
+import os
 
-# Vercel expects the app to be named 'app' or 'handler'
-handler = app
+# Add the backend src to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from todo_app.main import app
+
+# Vercel expects 'app' for ASGI frameworks like FastAPI
+app = app
