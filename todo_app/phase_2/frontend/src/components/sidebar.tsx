@@ -31,7 +31,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col">
       {/* Logo */}
       <div className="h-14 px-4 flex items-center border-b border-border">
-        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
           <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>

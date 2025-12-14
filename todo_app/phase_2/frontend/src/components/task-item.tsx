@@ -164,7 +164,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 {task.due_date && (
                   <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
                     isDueSoon()
-                      ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30 animate-pulse'
+                      ? 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-orange-500/30'
                       : 'text-foreground/70 dark:text-foreground/60 bg-muted/50 border-border'
                   }`}>
                     <CalendarIcon className="w-3 h-3" />
@@ -184,14 +184,10 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                   </div>
                 )}
                 {isDueSoon() && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-600 border border-orange-500/30"
-                  >
+                  <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-500/30">
                     <AlertCircle className="w-3 h-3" />
                     <span className="font-medium">Due Soon!</span>
-                  </motion.div>
+                  </div>
                 )}
                 <div className="flex items-center gap-1.5 text-xs text-foreground/50 dark:text-foreground/40 ml-auto bg-muted/30 px-2 py-1 rounded-full">
                   <Clock className="w-3 h-3" />
