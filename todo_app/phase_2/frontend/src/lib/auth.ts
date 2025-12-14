@@ -30,7 +30,7 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        expiresIn: "7d",
+        expirationTime: "7d",
         issuer: "todo-app",
         audience: "todo-app-api",
       },
