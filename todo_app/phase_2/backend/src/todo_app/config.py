@@ -25,10 +25,21 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:3000"
 
+    # Email Settings
+    email_address: str = ""
+    email_app_password: str = ""
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Parse CORS origins from comma-separated string."""
         return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    @property
+    def email_configured(self) -> bool:
+        """Check if email is properly configured."""
+        return bool(self.email_address and self.email_app_password)
 
 
 @lru_cache

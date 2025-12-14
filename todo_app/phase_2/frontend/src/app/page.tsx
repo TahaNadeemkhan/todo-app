@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -105,47 +106,33 @@ export default function LandingPage() {
             </div>
 
             {/* Hero Image / Mockup */}
-            <div className="relative w-full max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-lg border border-border bg-card">
-              {/* Mock Interface - Professional Dashboard Preview */}
-              <div className="h-full flex flex-col">
-                {/* Mock Header */}
-                <div className="h-12 border-b border-border flex items-center px-6 gap-4 bg-background">
-                  <div className="flex gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+            <div className="relative w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl border border-border/50">
+              {/* MacBook Style Frame */}
+              <div className="bg-zinc-800 dark:bg-zinc-900 rounded-t-2xl">
+                {/* Browser Header */}
+                <div className="h-10 flex items-center px-4 gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
                   </div>
-                  <div className="text-xs font-medium text-muted-foreground">iTasks Dashboard</div>
-                </div>
-                {/* Mock Content - Realistic Tasks */}
-                <div className="flex-1 p-6 md:p-8 space-y-3 bg-background">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-base font-semibold text-foreground">Today</div>
-                    <div className="text-xs text-muted-foreground">3 tasks</div>
-                  </div>
-
-                  {/* Task Items */}
-                  {[
-                    { done: true, text: "Review pull requests", priority: "high" },
-                    { done: false, text: "Update project documentation", priority: "medium" },
-                    { done: false, text: "Team standup at 10:00 AM", priority: "high" }
-                  ].map((task, i) => (
-                    <div key={i} className="h-12 md:h-14 rounded-lg border border-border bg-card flex items-center px-4 gap-3 shadow-sm">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${task.done ? 'bg-green-500 border-green-500' : 'border-muted-foreground/30'}`}>
-                        {task.done && <CheckCircle className="w-3 h-3 text-white" />}
-                      </div>
-                      <div className={`flex-1 text-sm ${task.done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                        {task.text}
-                      </div>
-                      <div className={`hidden sm:block px-2 py-0.5 rounded-full text-xs ${
-                        task.priority === 'high' ? 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-950 text-yellow-600 dark:text-yellow-400'
-                      }`}>
-                        {task.priority}
-                      </div>
+                  <div className="flex-1 mx-4">
+                    <div className="bg-zinc-700 dark:bg-zinc-800 rounded-md h-6 flex items-center justify-center">
+                      <span className="text-xs text-zinc-400">localhost:3000/dashboard</span>
                     </div>
-                  ))}
+                  </div>
                 </div>
+              </div>
+              {/* Dashboard Screenshot */}
+              <div className="relative w-full">
+                <Image
+                  src="/images/dashboard-preview.png"
+                  alt="iTasks Dashboard Preview"
+                  width={1397}
+                  height={911}
+                  className="w-full h-auto"
+                  priority
+                />
               </div>
             </div>
           </div>

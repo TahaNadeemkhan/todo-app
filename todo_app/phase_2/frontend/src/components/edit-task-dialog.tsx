@@ -14,8 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Task } from "@/lib/types";
+import { ChevronDown, ChevronRight, Bell } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface EditTaskDialogProps {
   task: Task;
@@ -32,11 +35,17 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
   const [dueDate, setDueDate] = useState(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : "");
   const [dueTime, setDueTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Advanced settings
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(task.notifications_enabled || false);
+  const [notifyEmail, setNotifyEmail] = useState(task.notify_email || "");
 
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description || "");
     setPriority(task.priority || "medium");
+    setNotificationsEnabled(task.notifications_enabled || false);
+    setNotifyEmail(task.notify_email || "");
 
     if (task.due_date) {
       const date = new Date(task.due_date);
@@ -93,6 +102,8 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
         description: description || undefined,
         priority,
         due_date: dueDateTimeISO,
+        notifications_enabled: notificationsEnabled,
+        notify_email: notificationsEnabled && notifyEmail ? notifyEmail : null,
       });
       onTaskUpdated(response.data);
       onOpenChange(false);
@@ -173,6 +184,75 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
                   className="bg-white/50 border-white/20 focus:border-primary/50 transition-all disabled:opacity-50"
                 />
               </div>
+            </div>
+
+            {/* Advanced Settings */}
+            <div className="border-t border-border pt-4 mt-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+              >
+                {showAdvanced ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <Bell className="h-4 w-4" />
+                <span>Notification Settings</span>
+              </button>
+
+              <AnimatePresence>
+                {showAdvanced && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-notifications"
+                          checked={notificationsEnabled}
+                          onCheckedChange={(checked) => {
+                            setNotificationsEnabled(checked === true);
+                            if (!checked) setNotifyEmail("");
+                          }}
+                        />
+                        <Label
+                          htmlFor="edit-notifications"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Enable email notifications for this task
+                        </Label>
+                      </div>
+
+                      {notificationsEnabled && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="grid gap-2"
+                        >
+                          <Label htmlFor="edit-notifyEmail">Notification Email</Label>
+                          <Input
+                            id="edit-notifyEmail"
+                            type="email"
+                            placeholder="Enter email for notifications"
+                            value={notifyEmail}
+                            onChange={(e) => setNotifyEmail(e.target.value)}
+                            className="bg-white/50 border-white/20 focus:border-primary/50 transition-all"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            You'll receive emails when this task is updated or completed.
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
           <DialogFooter>

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { User, Mail, Lock, Sun, Moon, LogOut, Shield, Eye, EyeOff } from "lucide-react";
 
 export default function SettingsPage() {
-  const { data: session, isLoading } = useSession();
+  const { data: session, isPending: isLoading } = useSession();
   const router = useRouter();
 
   // Change password state

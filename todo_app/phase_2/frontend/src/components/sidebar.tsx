@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Settings,
   User,
-  Sun
+  Sun,
+  Bell,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -25,6 +26,7 @@ export function Sidebar() {
     { href: "/today", label: "Today", icon: Sun },
     { href: "/upcoming", label: "Upcoming", icon: CalendarClock },
     { href: "/completed", label: "Completed", icon: CheckCircle2 },
+    { href: "/notifications", label: "Notifications", icon: Bell },
   ];
 
   return (

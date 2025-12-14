@@ -20,6 +20,9 @@ class TaskCreate(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     due_date: datetime | None = None
     priority: Priority = Priority.MEDIUM
+    # Notification settings
+    notify_email: str | None = Field(default=None, max_length=255)
+    notifications_enabled: bool = False
 
 
 class TaskUpdate(BaseModel):
@@ -29,6 +32,9 @@ class TaskUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     due_date: datetime | None = None
     priority: Priority | None = None
+    # Notification settings
+    notify_email: str | None = Field(default=None, max_length=255)
+    notifications_enabled: bool | None = None
 
 
 class TaskResponse(BaseModel):
@@ -41,6 +47,9 @@ class TaskResponse(BaseModel):
     completed: bool
     due_date: datetime | None
     priority: str
+    # Notification settings
+    notify_email: str | None
+    notifications_enabled: bool
     created_at: datetime
     updated_at: datetime
 
