@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { Task } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Calendar as CalendarIcon, Flag, AlertCircle, Clock } from "lucide-react";
+import { Pencil, Trash2, Calendar as CalendarIcon, Flag, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-react";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { useSession } from "@/lib/auth-client";
@@ -86,25 +85,50 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     <>
       <motion.div
         layout
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        whileHover={{ scale: 1.02, y: -4, transition: { type: "spring", stiffness: 400, damping: 10 } }}
+        exit={{ opacity: 0, scale: 0.95 }}
         className="group"
       >
-        <Card className="mb-4 overflow-hidden border-border bg-card/95 backdrop-blur-md shadow-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+        <Card className={`mb-3 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ${
+          task.completed
+            ? 'border-green-500/30 bg-green-50 dark:bg-green-950/20'
+            : 'border-border bg-card'
+        }`}>
           <CardContent className="flex items-start p-5 gap-4">
-            <motion.div whileTap={{ scale: 0.8 }}>
-              <Checkbox 
-                checked={task.completed} 
-                onCheckedChange={handleToggleComplete}
-                className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary border-muted-foreground/30 h-5 w-5 rounded-md" 
-              />
-            </motion.div>
-            
+            {/* Custom Checkbox with better UX */}
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              whileHover={{ scale: 1.1 }}
+              onClick={() => handleToggleComplete(!task.completed)}
+              className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
+                task.completed
+                  ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/30'
+                  : 'border-muted-foreground/40 hover:border-primary hover:bg-primary/10'
+              }`}
+              title={task.completed ? "Mark as incomplete" : "Mark as complete"}
+            >
+              {task.completed ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <Circle className="w-4 h-4 opacity-0 group-hover:opacity-30" />
+              )}
+            </motion.button>
+
             <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <h3 className={`font-semibold text-lg transition-all duration-300 ${task.completed ? "line-through text-muted-foreground decoration-2" : "text-foreground"}`}>
+              <div className="flex items-center justify-between gap-2">
+                {/* Completed Badge */}
+                {task.completed && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Completed</span>
+                  </motion.div>
+                )}
+                <h3 className={`font-semibold text-lg transition-all duration-300 flex-1 ${task.completed ? "line-through text-muted-foreground decoration-2" : "text-foreground"}`}>
                   {task.title}
                 </h3>
                 

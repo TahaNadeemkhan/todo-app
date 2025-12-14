@@ -86,13 +86,11 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button className="rounded-full shadow-lg hover:shadow-primary/40 bg-gradient-to-r from-primary to-purple-600 border-0 transition-all duration-300">
-            <Plus className="mr-2 h-4 w-4" /> Add Task
-          </Button>
-        </motion.div>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Plus className="mr-2 h-4 w-4" /> Add Task
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-white/20 shadow-2xl">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Task</DialogTitle>

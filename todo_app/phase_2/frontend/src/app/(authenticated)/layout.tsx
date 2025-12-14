@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 
 export default function AuthenticatedLayout({
   children,
@@ -6,14 +6,13 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen relative bg-background">
-      <Navbar />
-      
-      <div className="fixed top-20 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none -z-10 animate-float" />
-      <div className="fixed bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ animationDelay: "2s" }} />
+    <div className="min-h-screen bg-background flex">
+      <Sidebar />
 
-      <main className="max-w-2xl mx-auto px-6 py-8 relative z-10">
-        {children}
+      <main className="flex-1 ml-64 p-8 overflow-auto">
+        <div className="max-w-4xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );

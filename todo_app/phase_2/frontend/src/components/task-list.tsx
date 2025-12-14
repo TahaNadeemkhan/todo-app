@@ -87,11 +87,11 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-20"
+        className="text-center py-16"
       >
-        <div className="glass-panel inline-block px-8 py-6">
-          <p className="text-muted-foreground font-medium">{message}</p>
-          <p className="text-sm text-muted-foreground/60 mt-1">{subMessage}</p>
+        <div className="inline-block">
+          <p className="text-muted-foreground font-medium text-lg">{message}</p>
+          <p className="text-sm text-muted-foreground mt-1">{subMessage}</p>
         </div>
       </motion.div>
     );
@@ -102,22 +102,17 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
     const grouped = groupTasksByPeriod(tasks);
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Overdue Section */}
         {grouped.overdue.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-red-500/20">
-              <Calendar className="w-5 h-5 text-red-600" />
-              <h2 className="text-xl font-bold text-foreground">Overdue</h2>
-              <span className="text-sm font-medium text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full">
-                {grouped.overdue.length} {grouped.overdue.length === 1 ? 'task' : 'tasks'}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-red-600">Overdue</h2>
+              <span className="text-xs text-muted-foreground">
+                {grouped.overdue.length}
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {grouped.overdue.map((task) => (
                   <TaskItem
@@ -129,24 +124,19 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 ))}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Today Section */}
         {grouped.today.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-green-500/20">
-              <Calendar className="w-5 h-5 text-green-600" />
-              <h2 className="text-xl font-bold text-foreground">Today</h2>
-              <span className="text-sm font-medium text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full">
-                {grouped.today.length} {grouped.today.length === 1 ? 'task' : 'tasks'}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-primary">Today</h2>
+              <span className="text-xs text-muted-foreground">
+                {grouped.today.length}
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {grouped.today.map((task) => (
                   <TaskItem
@@ -158,24 +148,19 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 ))}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Tomorrow Section */}
         {grouped.tomorrow.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-orange-500/20">
-              <Calendar className="w-5 h-5 text-orange-600" />
-              <h2 className="text-xl font-bold text-foreground">Tomorrow</h2>
-              <span className="text-sm font-medium text-orange-600 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                {grouped.tomorrow.length} {grouped.tomorrow.length === 1 ? 'task' : 'tasks'}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">Tomorrow</h2>
+              <span className="text-xs text-muted-foreground">
+                {grouped.tomorrow.length}
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {grouped.tomorrow.map((task) => (
                   <TaskItem
@@ -187,24 +172,19 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 ))}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* This Week Section */}
         {grouped.thisWeek.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-blue-500/20">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-foreground">This Week</h2>
-              <span className="text-sm font-medium text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full">
-                {grouped.thisWeek.length} {grouped.thisWeek.length === 1 ? 'task' : 'tasks'}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">This Week</h2>
+              <span className="text-xs text-muted-foreground">
+                {grouped.thisWeek.length}
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {grouped.thisWeek.map((task) => (
                   <TaskItem
@@ -216,24 +196,19 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 ))}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Later Section */}
         {grouped.later.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-purple-500/20">
-              <Calendar className="w-5 h-5 text-purple-600" />
-              <h2 className="text-xl font-bold text-foreground">Later</h2>
-              <span className="text-sm font-medium text-purple-600 bg-purple-500/10 px-2 py-0.5 rounded-full">
-                {grouped.later.length} {grouped.later.length === 1 ? 'task' : 'tasks'}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-foreground">Later</h2>
+              <span className="text-xs text-muted-foreground">
+                {grouped.later.length}
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {grouped.later.map((task) => (
                   <TaskItem
@@ -245,7 +220,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 ))}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     );
@@ -253,7 +228,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
 
   // Default list view for other tabs
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <AnimatePresence mode="popLayout">
         {tasks.map((task) => (
           <TaskItem

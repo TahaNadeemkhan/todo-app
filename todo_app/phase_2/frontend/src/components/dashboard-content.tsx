@@ -111,27 +111,27 @@ export function DashboardContent({ forcedFilter }: DashboardContentProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="glass-panel p-5 h-32 animate-pulse" />
+          <div key={i} className="bg-card border border-border rounded-lg p-5 h-24 animate-pulse" />
         ))}
       </div>
     );
   }
 
-  const title = 
-    filter === 'today' ? 'Today' : 
+  const title =
+    filter === 'today' ? 'Today' :
     filter === 'upcoming' ? 'Upcoming' :
-    filter === 'completed' ? 'Completed' : 
-    'Dashboard';
+    filter === 'completed' ? 'Completed' :
+    'All Tasks';
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-muted-foreground mt-1">
-            {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} found
+          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
           </p>
         </div>
         <AddTaskDialog onTaskAdded={handleTaskAdded} />

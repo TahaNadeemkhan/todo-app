@@ -40,79 +40,73 @@
 }
 
 :root {
-  --radius: 1rem; /* Professional 16px rounded corners */
+  --radius: 0.5rem; /* Clean 8px rounded corners like Microsoft To Do */
 
-  /* Professional Theme - Light Mode (Inspired by Notion, Linear) */
-  --background: oklch(0.99 0.005 240); /* Almost White with subtle warmth */
-  --foreground: oklch(0.15 0.02 260); /* Rich Dark Navy - High Contrast */
+  /* Clean Light Theme (Microsoft To Do inspired) */
+  --background: #fafafa; /* Light gray background */
+  --foreground: #1f1f1f; /* Dark text */
 
-  /* Glass Surfaces - Stronger Opacity */
-  --card: oklch(1 0 0 / 0.85); /* More Solid White */
-  --card-foreground: oklch(0.15 0.02 260);
+  /* Card/Surface - Clean White */
+  --card: #ffffff;
+  --card-foreground: #1f1f1f;
 
-  --popover: oklch(1 0 0 / 0.95);
-  --popover-foreground: oklch(0.15 0.02 260);
+  --popover: #ffffff;
+  --popover-foreground: #1f1f1f;
 
-  /* Primary Action - Modern Vibrant Blue */
-  --primary: oklch(0.5 0.2 250); /* Saturated Blue */
-  --primary-foreground: oklch(0.99 0 0);
+  /* Primary Action - Clean Blue */
+  --primary: #2564cf; /* Microsoft To Do blue */
+  --primary-foreground: #ffffff;
 
-  /* Secondary - Clean Gray */
-  --secondary: oklch(0.96 0.005 240 / 0.8);
-  --secondary-foreground: oklch(0.25 0.03 260);
+  /* Secondary - Light Gray */
+  --secondary: #f3f3f3;
+  --secondary-foreground: #1f1f1f;
 
-  --muted: oklch(0.97 0.005 240);
-  --muted-foreground: oklch(0.45 0.02 260); /* Darker for better readability */
+  --muted: #f3f3f3;
+  --muted-foreground: #666666;
 
-  --accent: oklch(0.94 0.02 250 / 0.7);
-  --accent-foreground: oklch(0.15 0.03 260);
+  --accent: #e8f0fe;
+  --accent-foreground: #1f1f1f;
 
-  --destructive: oklch(0.55 0.22 25); /* Vibrant Red */
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #d32f2f;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(0.88 0.01 240 / 0.5);
-  --input: oklch(0.96 0.005 240 / 0.7);
-  --ring: oklch(0.5 0.2 250 / 0.4);
-
-  /* Premium Gradients */
-  --aurora-gradient: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(237, 233, 254, 0.8) 50%, rgba(253, 242, 248, 0.8) 100%);
+  --border: #e0e0e0;
+  --input: #f3f3f3;
+  --ring: #2564cf;
 }
 
 .dark {
-  /* Professional Dark Mode (Inspired by GitHub Dark, VS Code) */
-  --background: oklch(0.12 0.015 260); /* Deep Navy Background */
-  --foreground: oklch(0.95 0.01 240); /* Bright White Text - High Contrast */
+  /* Clean Dark Mode (Microsoft To Do inspired) */
+  --background: #1f1f1f;
+  --foreground: #ffffff;
 
-  /* Glass Surfaces - More Solid in Dark */
-  --card: oklch(0.18 0.02 260 / 0.9);
-  --card-foreground: oklch(0.95 0.01 240);
+  /* Card/Surface - Dark Gray */
+  --card: #2d2d2d;
+  --card-foreground: #ffffff;
 
-  --popover: oklch(0.18 0.02 260 / 0.95);
-  --popover-foreground: oklch(0.95 0.01 240);
+  --popover: #2d2d2d;
+  --popover-foreground: #ffffff;
 
-  /* Primary Action - Vibrant Blue */
-  --primary: oklch(0.6 0.2 250);
-  --primary-foreground: oklch(0.05 0.01 260);
+  /* Primary Action - Lighter Blue */
+  --primary: #4a8cff;
+  --primary-foreground: #ffffff;
 
-  /* Secondary - Subtle Gray */
-  --secondary: oklch(0.22 0.02 260 / 0.7);
-  --secondary-foreground: oklch(0.85 0.015 240);
+  /* Secondary - Darker Gray */
+  --secondary: #383838;
+  --secondary-foreground: #ffffff;
 
-  --muted: oklch(0.2 0.02 260);
-  --muted-foreground: oklch(0.55 0.02 240); /* Brighter for readability */
+  --muted: #383838;
+  --muted-foreground: #b3b3b3;
 
-  --accent: oklch(0.28 0.04 260 / 0.6);
-  --accent-foreground: oklch(0.95 0.01 240);
+  --accent: #1a3a5c;
+  --accent-foreground: #ffffff;
 
-  --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #f44336;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(0.28 0.02 260 / 0.5);
-  --input: oklch(0.22 0.02 260 / 0.5);
-  --ring: oklch(0.6 0.2 250 / 0.4);
-
-  /* Dark Premium Gradients */
-  --aurora-gradient: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 27, 75, 0.9) 50%, rgba(49, 25, 80, 0.9) 100%);
+  --border: #3d3d3d;
+  --input: #383838;
+  --ring: #4a8cff;
 }
 
 @layer base {
@@ -121,13 +115,5 @@
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20;
-    background-image: var(--aurora-gradient);
-    background-attachment: fixed;
-    background-size: cover;
-  }
-  
-  /* Glass Component Utility */
-  .glass-panel {
-    @apply bg-card backdrop-blur-2xl border border-white/20 shadow-xl rounded-3xl;
   }
 }
