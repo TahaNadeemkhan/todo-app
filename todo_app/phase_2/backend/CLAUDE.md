@@ -2,7 +2,7 @@
 
 ## Build & Run
 - Package Manager: `uv`
-- Run Dev Server: `uv run uvicorn src.todo_app.main:app --reload --port 8000`
+- Run Dev Server: `PYTHONPATH=src uv run uvicorn todo_app.main:app --reload --port 8000`
 - Run Tests: `uv run pytest`
 
 ## Architecture
