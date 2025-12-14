@@ -45,9 +45,9 @@ export default function RegisterPage() {
 
       if (error) {
         toast.error(error.message || "Failed to create account");
-      } else {
+      } else if (data) {
         toast.success("Account created successfully! Please log in.");
-        router.push("/login");
+        window.location.href = "/login";
       }
     } catch (err) {
       toast.error("An unexpected error occurred");

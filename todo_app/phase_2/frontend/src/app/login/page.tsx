@@ -29,9 +29,10 @@ export default function LoginPage() {
 
       if (error) {
         toast.error(error.message || "Failed to sign in");
-      } else {
+      } else if (data) {
         toast.success("Signed in successfully!");
-        router.push("/dashboard");
+        router.refresh();
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       toast.error("An unexpected error occurred");
