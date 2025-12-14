@@ -37,6 +37,7 @@ export const auth = betterAuth({
     }),
   ],
   trustedOrigins: [
+    "https://itask-chi.vercel.app",
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ],
 });
