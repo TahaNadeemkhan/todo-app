@@ -48,12 +48,15 @@ export const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins: [
-    "https://itask-chi.vercel.app",
-    "http://localhost:3000",
-    process.env.NEXT_PUBLIC_APP_URL || "",
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
-  ].filter(Boolean), // Remove empty strings
+  trustedOrigins: (origin) => {
+    // Allow localhost for development
+    if (origin?.includes("localhost")) return true;
+    // Allow all Vercel preview deployments
+    if (origin?.includes("vercel.app")) return true;
+    // Allow production domain
+    if (origin?.includes("itask-chi.vercel.app")) return true;
+    return false;
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;
