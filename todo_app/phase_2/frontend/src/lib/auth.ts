@@ -48,14 +48,15 @@ export const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins: (origin) => {
-    // Allow localhost for development
-    if (origin?.includes("localhost")) return true;
-    // Allow all Vercel preview deployments
-    if (origin?.includes("vercel.app")) return true;
-    // Allow production domain
-    if (origin?.includes("itask-chi.vercel.app")) return true;
-    return false;
+  trustedOrigins: ["https://itask-chi.vercel.app", "http://localhost:3000"],
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: false,
+    },
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
   },
 });
 
