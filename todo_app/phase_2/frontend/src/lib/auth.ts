@@ -7,7 +7,19 @@ import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
+// Determine the base URL for Better Auth
+const getBaseURL = () => {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+};
+
 export const auth = betterAuth({
+  baseURL: getBaseURL(),
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
@@ -38,8 +50,10 @@ export const auth = betterAuth({
   ],
   trustedOrigins: [
     "https://itask-chi.vercel.app",
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  ],
+    "http://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL || "",
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
+  ].filter(Boolean), // Remove empty strings
 });
 
 export type Session = typeof auth.$Infer.Session;
