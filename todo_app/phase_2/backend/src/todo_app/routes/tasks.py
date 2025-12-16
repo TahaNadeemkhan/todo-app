@@ -97,33 +97,63 @@ async def create_task(
     session.commit()
     session.refresh(task)
 
-    # Send notification directly (not in background for now)
+    # Queue email notification in a fire-and-forget manner
     if task.notifications_enabled and task.notify_email:
-        print(f"[CreateTask] Sending notification for task: {task.title}")
-        try:
-            email_sent = await email_service.send_notification(
-                to_email=task.notify_email,
+        print(f"[CreateTask] Queueing notification for task: {task.title}")
+        # Fire and forget - don't wait for email
+        asyncio.create_task(
+            send_email_notification(
+                user_id=task.user_id,
+                task_id=task.id,
+                notify_email=task.notify_email,
                 notification_type="task_created",
                 task_title=task.title,
                 task_description=task.description,
                 due_date=task.due_date,
             )
-            print(f"[CreateTask] Email sent: {email_sent}")
-            if email_sent:
-                notification = Notification(
-                    user_id=task.user_id,
-                    task_id=task.id,
-                    type="task_created",
-                    title=f"Task Created: {task.title}",
-                    message=f"New task '{task.title}' has been created.",
-                    email_sent_to=task.notify_email,
-                )
-                session.add(notification)
-                session.commit()
-        except Exception as e:
-            print(f"[CreateTask] Email error: {e}")
+        )
 
     return task
+
+
+async def send_email_notification(
+    user_id: str,
+    task_id: int,
+    notify_email: str,
+    notification_type: str,
+    task_title: str,
+    task_description: str | None,
+    due_date: datetime | None,
+):
+    """Send email notification in background (fire and forget)."""
+    try:
+        print(f"[EmailBG] Starting email send to: {notify_email}")
+        email_sent = await email_service.send_notification(
+            to_email=notify_email,
+            notification_type=notification_type,
+            task_title=task_title,
+            task_description=task_description,
+            due_date=due_date,
+        )
+        print(f"[EmailBG] Email sent: {email_sent}")
+
+        if email_sent:
+            # Create new session for background task
+            from todo_app.db import engine
+            with Session(engine) as bg_session:
+                notification = Notification(
+                    user_id=user_id,
+                    task_id=task_id,
+                    type=notification_type,
+                    title=f"{notification_type.replace('_', ' ').title()}: {task_title}",
+                    message=f"Task '{task_title}' notification sent.",
+                    email_sent_to=notify_email,
+                )
+                bg_session.add(notification)
+                bg_session.commit()
+                print(f"[EmailBG] Notification saved to DB")
+    except Exception as e:
+        print(f"[EmailBG] Error: {e}")
 
 
 @router.get("/{user_id}/tasks/{task_id}", response_model=TaskResponse)
