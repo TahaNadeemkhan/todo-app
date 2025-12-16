@@ -118,7 +118,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex-1 mx-4">
                     <div className="bg-zinc-700 dark:bg-zinc-800 rounded-md h-6 flex items-center justify-center">
-                      <span className="text-xs text-zinc-400">localhost:3000/dashboard</span>
+                      <span className="text-xs text-zinc-400">https://itask-chi.vercel.app/dashboard</span>
                     </div>
                   </div>
                 </div>
