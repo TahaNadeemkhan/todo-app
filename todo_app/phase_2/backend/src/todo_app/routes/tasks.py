@@ -88,7 +88,6 @@ async def create_task(
     user_id: ValidatedUserId,
     task_in: TaskCreate,
     session: SessionDep,
-    background_tasks: BackgroundTasks,
 ) -> Task:
     """
     Create a new task.
@@ -98,15 +97,31 @@ async def create_task(
     session.commit()
     session.refresh(task)
 
-    # Send notification in background
+    # Send notification directly (not in background for now)
     if task.notifications_enabled and task.notify_email:
-        background_tasks.add_task(
-            send_task_notification,
-            session,
-            task,
-            "task_created",
-            f"New task '{task.title}' has been created.",
-        )
+        print(f"[CreateTask] Sending notification for task: {task.title}")
+        try:
+            email_sent = await email_service.send_notification(
+                to_email=task.notify_email,
+                notification_type="task_created",
+                task_title=task.title,
+                task_description=task.description,
+                due_date=task.due_date,
+            )
+            print(f"[CreateTask] Email sent: {email_sent}")
+            if email_sent:
+                notification = Notification(
+                    user_id=task.user_id,
+                    task_id=task.id,
+                    type="task_created",
+                    title=f"Task Created: {task.title}",
+                    message=f"New task '{task.title}' has been created.",
+                    email_sent_to=task.notify_email,
+                )
+                session.add(notification)
+                session.commit()
+        except Exception as e:
+            print(f"[CreateTask] Email error: {e}")
 
     return task
 
