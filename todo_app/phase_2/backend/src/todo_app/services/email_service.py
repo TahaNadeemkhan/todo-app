@@ -4,13 +4,18 @@ Email notification service using Gmail SMTP.
 
 import smtplib
 import logging
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Thread pool for running sync SMTP in async context
+_executor = ThreadPoolExecutor(max_workers=3)
 
 
 class EmailService:
@@ -117,6 +122,34 @@ class EmailService:
         template = templates.get(notification_type, templates["task_updated"])
         return template["subject"], template["body"]
 
+    def _send_email_sync(self, to_email: str, subject: str, html_body: str, plain_text: str) -> bool:
+        """Synchronous email sending (runs in thread pool)."""
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"iTasks <{self.settings.email_address}>"
+            msg["To"] = to_email
+
+            msg.attach(MIMEText(plain_text, "plain"))
+            msg.attach(MIMEText(html_body, "html"))
+
+            print(f"[EmailService] Connecting to SMTP: {self.settings.smtp_host}:{self.settings.smtp_port}")
+            with smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port, timeout=30) as server:
+                server.starttls()
+                print(f"[EmailService] Logging in as: {self.settings.email_address}")
+                server.login(self.settings.email_address, self.settings.email_app_password)
+                print(f"[EmailService] Sending email to: {to_email}")
+                server.sendmail(self.settings.email_address, to_email, msg.as_string())
+
+            print(f"[EmailService] Email sent successfully to {to_email}")
+            logger.info(f"Email sent successfully to {to_email}")
+            return True
+
+        except Exception as e:
+            print(f"[EmailService] SMTP Error: {e}")
+            logger.error(f"Failed to send email: {e}")
+            return False
+
     async def send_notification(
         self,
         to_email: str,
@@ -125,7 +158,7 @@ class EmailService:
         task_description: str | None = None,
         due_date: datetime | None = None,
     ) -> bool:
-        """Send email notification."""
+        """Send email notification asynchronously."""
         print(f"[EmailService] send_notification called")
         print(f"[EmailService] to_email: {to_email}, type: {notification_type}")
         print(f"[EmailService] email_configured: {self.settings.email_configured}")
@@ -140,27 +173,22 @@ class EmailService:
             subject, html_body = self._get_email_template(
                 notification_type, task_title, task_description, due_date
             )
-
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"iTasks <{self.settings.email_address}>"
-            msg["To"] = to_email
-
-            # Plain text fallback
             plain_text = f"{notification_type.replace('_', ' ').title()}: {task_title}"
-            msg.attach(MIMEText(plain_text, "plain"))
-            msg.attach(MIMEText(html_body, "html"))
 
-            # Send email
-            with smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port) as server:
-                server.starttls()
-                server.login(self.settings.email_address, self.settings.email_app_password)
-                server.sendmail(self.settings.email_address, to_email, msg.as_string())
-
-            logger.info(f"Email sent successfully to {to_email}")
-            return True
+            # Run sync SMTP in thread pool to not block event loop
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                _executor,
+                self._send_email_sync,
+                to_email,
+                subject,
+                html_body,
+                plain_text,
+            )
+            return result
 
         except Exception as e:
+            print(f"[EmailService] Error: {e}")
             logger.error(f"Failed to send email: {e}")
             return False
 
