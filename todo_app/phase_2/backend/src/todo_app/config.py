@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
 
-    # Resend API (for production - Railway blocks SMTP)
-    resend_api_key: str = ""
+    # Brevo API (for production - Railway blocks SMTP)
+    brevo_api_key: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -41,13 +41,13 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        """Check if email is properly configured (Resend or SMTP)."""
-        return bool(self.resend_api_key) or bool(self.email_address and self.email_app_password)
+        """Check if email is properly configured (Brevo or SMTP)."""
+        return bool(self.brevo_api_key) or bool(self.email_address and self.email_app_password)
 
     @property
-    def use_resend(self) -> bool:
-        """Use Resend API if configured."""
-        return bool(self.resend_api_key)
+    def use_brevo(self) -> bool:
+        """Use Brevo API if configured."""
+        return bool(self.brevo_api_key)
 
 
 @lru_cache

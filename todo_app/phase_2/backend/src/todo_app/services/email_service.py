@@ -1,5 +1,5 @@
 """
-Email notification service using Resend API (production) or Gmail SMTP (local).
+Email notification service using Brevo API (production) or Gmail SMTP (local).
 """
 
 import smtplib
@@ -10,7 +10,8 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
-import resend
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 from ..config import get_settings
 
@@ -25,9 +26,15 @@ class EmailService:
 
     def __init__(self):
         self.settings = get_settings()
-        # Configure Resend if API key is available
-        if self.settings.resend_api_key:
-            resend.api_key = self.settings.resend_api_key
+        self._brevo_api = None
+
+        # Configure Brevo if API key is available
+        if self.settings.brevo_api_key:
+            configuration = sib_api_v3_sdk.Configuration()
+            configuration.api_key['api-key'] = self.settings.brevo_api_key
+            self._brevo_api = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+            )
 
     def _get_email_template(self, notification_type: str, task_title: str, task_description: str | None, due_date: datetime | None) -> tuple[str, str]:
         """Generate email subject and HTML body based on notification type."""
@@ -109,22 +116,29 @@ class EmailService:
         template = templates.get(notification_type, templates["task_updated"])
         return template["subject"], template["body"]
 
-    def _send_via_resend(self, to_email: str, subject: str, html_body: str) -> bool:
-        """Send email via Resend API."""
+    def _send_via_brevo(self, to_email: str, subject: str, html_body: str) -> bool:
+        """Send email via Brevo API."""
         try:
-            print(f"[EmailService] Sending via Resend to: {to_email}")
-            params: resend.Emails.SendParams = {
-                "from": "iTasks <onboarding@resend.dev>",
-                "to": [to_email],
-                "subject": subject,
-                "html": html_body,
-            }
-            email_response = resend.Emails.send(params)
-            print(f"[EmailService] Resend response: {email_response}")
+            print(f"[EmailService] Sending via Brevo to: {to_email}")
+
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": to_email}],
+                sender={"name": "iTasks", "email": self.settings.email_address or "noreply@itasks.app"},
+                subject=subject,
+                html_content=html_body,
+            )
+
+            response = self._brevo_api.send_transac_email(send_smtp_email)
+            print(f"[EmailService] Brevo response: {response}")
             return True
+
+        except ApiException as e:
+            print(f"[EmailService] Brevo API Error: {e}")
+            logger.error(f"Brevo failed: {e}")
+            return False
         except Exception as e:
-            print(f"[EmailService] Resend Error: {e}")
-            logger.error(f"Resend failed: {e}")
+            print(f"[EmailService] Brevo Error: {e}")
+            logger.error(f"Brevo failed: {e}")
             return False
 
     def _send_via_smtp(self, to_email: str, subject: str, html_body: str, plain_text: str) -> bool:
@@ -170,7 +184,7 @@ class EmailService:
         """Send email notification asynchronously."""
         print(f"[EmailService] send_notification called")
         print(f"[EmailService] to_email: {to_email}, type: {notification_type}")
-        print(f"[EmailService] use_resend: {self.settings.use_resend}")
+        print(f"[EmailService] use_brevo: {self.settings.use_brevo}")
         print(f"[EmailService] email_configured: {self.settings.email_configured}")
 
         if not self.settings.email_configured:
@@ -185,11 +199,11 @@ class EmailService:
 
             loop = asyncio.get_event_loop()
 
-            if self.settings.use_resend:
-                # Use Resend API
+            if self.settings.use_brevo:
+                # Use Brevo API
                 result = await loop.run_in_executor(
                     _executor,
-                    self._send_via_resend,
+                    self._send_via_brevo,
                     to_email,
                     subject,
                     html_body,
