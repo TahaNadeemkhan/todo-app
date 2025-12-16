@@ -46,7 +46,7 @@ export default function LandingPage() {
                 <span className="text-sm font-medium text-muted-foreground hidden sm:block">
                   {session.user.name || session.user.email}
                 </span>
-                <Button asChild className="bg-primary hover:bg-primary/90">
+                <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md shadow-blue-500/20 transition-all">
                   <Link href="/dashboard">
                     Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -68,7 +68,7 @@ export default function LandingPage() {
                     <LogIn className="w-4 h-4" /> Sign In
                   </Link>
                 </Button>
-                <Button asChild className="bg-primary hover:bg-primary/90">
+                <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md shadow-blue-500/20 transition-all">
                   <Link href="/register">Get Started</Link>
                 </Button>
               </>
@@ -79,7 +79,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="relative pt-16 pb-24">
+        <section className="relative pt-16 pb-24 bg-gradient-to-b from-blue-50/50 via-purple-50/30 to-white dark:from-blue-950/20 dark:via-purple-950/10 dark:to-background">
           <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
             <div>
               <span className="inline-block py-1 px-3 rounded-full bg-blue-100 dark:bg-blue-950 text-primary text-sm font-medium mb-6">
@@ -96,10 +96,10 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                <Button size="lg" asChild className="h-11 px-8 bg-primary hover:bg-primary/90">
+                <Button size="lg" asChild className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg shadow-blue-500/30 transition-all">
                   <Link href="/register">Start for free <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="h-11 px-8">
+                <Button size="lg" variant="outline" asChild className="h-12 px-8 border-blue-200 hover:bg-blue-50 dark:border-blue-900 dark:hover:bg-blue-950/50 transition-all">
                   <Link href="https://github.com/TahaNadeemkhan/todo-app" target="_blank">View on GitHub</Link>
                 </Button>
               </div>
