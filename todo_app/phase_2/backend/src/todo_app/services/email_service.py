@@ -133,13 +133,25 @@ class EmailService:
             msg.attach(MIMEText(plain_text, "plain"))
             msg.attach(MIMEText(html_body, "html"))
 
-            print(f"[EmailService] Connecting to SMTP: {self.settings.smtp_host}:{self.settings.smtp_port}")
-            with smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port, timeout=30) as server:
-                server.starttls()
-                print(f"[EmailService] Logging in as: {self.settings.email_address}")
-                server.login(self.settings.email_address, self.settings.email_app_password)
-                print(f"[EmailService] Sending email to: {to_email}")
-                server.sendmail(self.settings.email_address, to_email, msg.as_string())
+            smtp_port = self.settings.smtp_port
+            print(f"[EmailService] Connecting to SMTP: {self.settings.smtp_host}:{smtp_port}")
+
+            # Use SSL (port 465) or TLS (port 587)
+            if smtp_port == 465:
+                # SSL connection
+                with smtplib.SMTP_SSL(self.settings.smtp_host, smtp_port, timeout=30) as server:
+                    print(f"[EmailService] Logging in as: {self.settings.email_address}")
+                    server.login(self.settings.email_address, self.settings.email_app_password)
+                    print(f"[EmailService] Sending email to: {to_email}")
+                    server.sendmail(self.settings.email_address, to_email, msg.as_string())
+            else:
+                # TLS connection (starttls)
+                with smtplib.SMTP(self.settings.smtp_host, smtp_port, timeout=30) as server:
+                    server.starttls()
+                    print(f"[EmailService] Logging in as: {self.settings.email_address}")
+                    server.login(self.settings.email_address, self.settings.email_app_password)
+                    print(f"[EmailService] Sending email to: {to_email}")
+                    server.sendmail(self.settings.email_address, to_email, msg.as_string())
 
             print(f"[EmailService] Email sent successfully to {to_email}")
             logger.info(f"Email sent successfully to {to_email}")
