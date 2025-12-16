@@ -1,5 +1,5 @@
 """
-Email notification service using Gmail SMTP.
+Email notification service using Resend API (production) or Gmail SMTP (local).
 """
 
 import smtplib
@@ -10,11 +10,13 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
+import resend
+
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Thread pool for running sync SMTP in async context
+# Thread pool for running sync operations in async context
 _executor = ThreadPoolExecutor(max_workers=3)
 
 
@@ -23,6 +25,9 @@ class EmailService:
 
     def __init__(self):
         self.settings = get_settings()
+        # Configure Resend if API key is available
+        if self.settings.resend_api_key:
+            resend.api_key = self.settings.resend_api_key
 
     def _get_email_template(self, notification_type: str, task_title: str, task_description: str | None, due_date: datetime | None) -> tuple[str, str]:
         """Generate email subject and HTML body based on notification type."""
@@ -99,31 +104,31 @@ class EmailService:
                 </div>
                 """
             },
-            "due_reminder": {
-                "subject": f"Reminder: {task_title} is due soon!",
-                "body": f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-                        <h1 style="color: white; margin: 0; font-size: 24px;">Task Reminder</h1>
-                    </div>
-                    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                        <h2 style="color: #333; margin-top: 0;">{task_title}</h2>
-                        <p style="color: #666;">{task_description or 'No description provided'}</p>
-                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                            <p style="margin: 0; color: #856404;"><strong>Due:</strong> {due_date_str}</p>
-                        </div>
-                        <p style="color: #888; font-size: 12px; margin-top: 30px;">This is an automated notification from iTasks.</p>
-                    </div>
-                </div>
-                """
-            },
         }
 
         template = templates.get(notification_type, templates["task_updated"])
         return template["subject"], template["body"]
 
-    def _send_email_sync(self, to_email: str, subject: str, html_body: str, plain_text: str) -> bool:
-        """Synchronous email sending (runs in thread pool)."""
+    def _send_via_resend(self, to_email: str, subject: str, html_body: str) -> bool:
+        """Send email via Resend API."""
+        try:
+            print(f"[EmailService] Sending via Resend to: {to_email}")
+            params: resend.Emails.SendParams = {
+                "from": "iTasks <onboarding@resend.dev>",
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+            }
+            email_response = resend.Emails.send(params)
+            print(f"[EmailService] Resend response: {email_response}")
+            return True
+        except Exception as e:
+            print(f"[EmailService] Resend Error: {e}")
+            logger.error(f"Resend failed: {e}")
+            return False
+
+    def _send_via_smtp(self, to_email: str, subject: str, html_body: str, plain_text: str) -> bool:
+        """Send email via SMTP (for local development)."""
         try:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
@@ -136,30 +141,22 @@ class EmailService:
             smtp_port = self.settings.smtp_port
             print(f"[EmailService] Connecting to SMTP: {self.settings.smtp_host}:{smtp_port}")
 
-            # Use SSL (port 465) or TLS (port 587)
             if smtp_port == 465:
-                # SSL connection
                 with smtplib.SMTP_SSL(self.settings.smtp_host, smtp_port, timeout=30) as server:
-                    print(f"[EmailService] Logging in as: {self.settings.email_address}")
                     server.login(self.settings.email_address, self.settings.email_app_password)
-                    print(f"[EmailService] Sending email to: {to_email}")
                     server.sendmail(self.settings.email_address, to_email, msg.as_string())
             else:
-                # TLS connection (starttls)
                 with smtplib.SMTP(self.settings.smtp_host, smtp_port, timeout=30) as server:
                     server.starttls()
-                    print(f"[EmailService] Logging in as: {self.settings.email_address}")
                     server.login(self.settings.email_address, self.settings.email_app_password)
-                    print(f"[EmailService] Sending email to: {to_email}")
                     server.sendmail(self.settings.email_address, to_email, msg.as_string())
 
-            print(f"[EmailService] Email sent successfully to {to_email}")
-            logger.info(f"Email sent successfully to {to_email}")
+            print(f"[EmailService] SMTP email sent successfully")
             return True
 
         except Exception as e:
             print(f"[EmailService] SMTP Error: {e}")
-            logger.error(f"Failed to send email: {e}")
+            logger.error(f"SMTP failed: {e}")
             return False
 
     async def send_notification(
@@ -173,12 +170,11 @@ class EmailService:
         """Send email notification asynchronously."""
         print(f"[EmailService] send_notification called")
         print(f"[EmailService] to_email: {to_email}, type: {notification_type}")
+        print(f"[EmailService] use_resend: {self.settings.use_resend}")
         print(f"[EmailService] email_configured: {self.settings.email_configured}")
-        print(f"[EmailService] EMAIL_ADDRESS: {self.settings.email_address}")
 
         if not self.settings.email_configured:
-            print("[EmailService] Email not configured, skipping notification")
-            logger.warning("Email not configured, skipping notification")
+            print("[EmailService] Email not configured, skipping")
             return False
 
         try:
@@ -187,16 +183,29 @@ class EmailService:
             )
             plain_text = f"{notification_type.replace('_', ' ').title()}: {task_title}"
 
-            # Run sync SMTP in thread pool to not block event loop
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                _executor,
-                self._send_email_sync,
-                to_email,
-                subject,
-                html_body,
-                plain_text,
-            )
+
+            if self.settings.use_resend:
+                # Use Resend API
+                result = await loop.run_in_executor(
+                    _executor,
+                    self._send_via_resend,
+                    to_email,
+                    subject,
+                    html_body,
+                )
+            else:
+                # Use SMTP
+                result = await loop.run_in_executor(
+                    _executor,
+                    self._send_via_smtp,
+                    to_email,
+                    subject,
+                    html_body,
+                    plain_text,
+                )
+
+            print(f"[EmailService] Result: {result}")
             return result
 
         except Exception as e:

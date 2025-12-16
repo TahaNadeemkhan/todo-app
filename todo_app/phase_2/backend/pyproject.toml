@@ -12,6 +12,7 @@ dependencies = [
     "python-dotenv",
     "psycopg2-binary",
     "pydantic-settings>=2.12.0",
+    "resend",
 ]
 
 [dependency-groups]

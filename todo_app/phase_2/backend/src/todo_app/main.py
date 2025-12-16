@@ -60,6 +60,8 @@ async def debug_email_config() -> dict:
     """Debug endpoint to check email configuration."""
     return {
         "email_configured": settings.email_configured,
+        "use_resend": settings.use_resend,
+        "has_resend_key": bool(settings.resend_api_key),
         "email_address": settings.email_address if settings.email_address else "NOT SET",
         "smtp_host": settings.smtp_host,
         "smtp_port": settings.smtp_port,
