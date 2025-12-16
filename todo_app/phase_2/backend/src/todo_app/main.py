@@ -53,3 +53,35 @@ app.include_router(notifications.router)
 async def health_check() -> dict[str, str]:
     """Health check endpoint for monitoring."""
     return {"status": "healthy"}
+
+
+@app.get("/debug/email-config", tags=["Debug"])
+async def debug_email_config() -> dict:
+    """Debug endpoint to check email configuration."""
+    return {
+        "email_configured": settings.email_configured,
+        "email_address": settings.email_address if settings.email_address else "NOT SET",
+        "smtp_host": settings.smtp_host,
+        "smtp_port": settings.smtp_port,
+        "has_app_password": bool(settings.email_app_password),
+    }
+
+
+@app.get("/debug/test-email", tags=["Debug"])
+async def test_email() -> dict:
+    """Test email sending."""
+    from todo_app.services.email_service import email_service
+
+    if not settings.email_configured:
+        return {"success": False, "error": "Email not configured"}
+
+    try:
+        result = await email_service.send_notification(
+            to_email=settings.email_address,  # Send to self
+            notification_type="task_created",
+            task_title="Test Email from Railway",
+            task_description="This is a test email to verify SMTP works on Railway.",
+        )
+        return {"success": result, "sent_to": settings.email_address}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
