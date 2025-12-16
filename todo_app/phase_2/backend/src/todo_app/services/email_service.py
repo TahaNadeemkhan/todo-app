@@ -126,8 +126,13 @@ class EmailService:
         due_date: datetime | None = None,
     ) -> bool:
         """Send email notification."""
+        print(f"[EmailService] send_notification called")
+        print(f"[EmailService] to_email: {to_email}, type: {notification_type}")
+        print(f"[EmailService] email_configured: {self.settings.email_configured}")
+        print(f"[EmailService] EMAIL_ADDRESS: {self.settings.email_address}")
 
         if not self.settings.email_configured:
+            print("[EmailService] Email not configured, skipping notification")
             logger.warning("Email not configured, skipping notification")
             return False
 

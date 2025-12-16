@@ -22,10 +22,15 @@ async def send_task_notification(
     message: str,
 ):
     """Send email notification and save to database."""
+    print(f"[Notification] Starting notification for task: {task.title}")
+    print(f"[Notification] notifications_enabled: {task.notifications_enabled}, notify_email: {task.notify_email}")
+
     if not task.notifications_enabled or not task.notify_email:
+        print("[Notification] Skipping - notifications not enabled or no email")
         return
 
     # Send email
+    print(f"[Notification] Sending email to: {task.notify_email}")
     email_sent = await email_service.send_notification(
         to_email=task.notify_email,
         notification_type=notification_type,
@@ -33,6 +38,7 @@ async def send_task_notification(
         task_description=task.description,
         due_date=task.due_date,
     )
+    print(f"[Notification] Email sent result: {email_sent}")
 
     if email_sent:
         # Save notification to database
@@ -46,6 +52,7 @@ async def send_task_notification(
         )
         session.add(notification)
         session.commit()
+        print(f"[Notification] Saved to database")
 
 
 @router.get("/{user_id}/tasks", response_model=list[TaskResponse])
