@@ -40,7 +40,7 @@ tests:
 
 Now I want you to start implementing remaining work from task.md, remember you are 50+ experience developer so code accordingly
 
-(User clarified: sirf Phase 2 of tasks.md complete karna hai - Foundational tasks T014-T037)
+(User clarified: only Phase 2 of tasks.md needs to be complete - Foundational tasks T014-T037)
 
 ## Response snapshot
 

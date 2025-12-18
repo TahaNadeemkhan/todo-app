@@ -8,15 +8,18 @@ from uuid import uuid4, UUID
 from datetime import datetime
 from pydantic import ValidationError
 from models.conversation import Conversation
+from models.message import Message
 
 
 def test_conversation_creation():
     """Test conversation model instantiation with required fields"""
-    user_id = str(uuid4())
+    user_id = uuid4()
     conversation = Conversation(user_id=user_id)
 
     assert conversation.id is not None
+    assert isinstance(conversation.id, UUID)
     assert conversation.user_id == user_id
+    assert isinstance(conversation.user_id, UUID)
     assert conversation.created_at is not None
     assert conversation.updated_at is not None
     assert isinstance(conversation.created_at, datetime)
@@ -25,7 +28,7 @@ def test_conversation_creation():
 
 def test_conversation_timestamps_auto_generated():
     """Test created_at and updated_at are auto-generated"""
-    user_id = str(uuid4())
+    user_id = uuid4()
     conversation = Conversation(user_id=user_id)
 
     assert conversation.created_at is not None
@@ -52,11 +55,18 @@ def test_conversation_table_name():
 
 def test_conversation_id_is_uuid():
     """Test conversation ID is a valid UUID"""
-    user_id = str(uuid4())
+    user_id = uuid4()
     conversation = Conversation(user_id=user_id)
 
-    # ID should be a valid UUID string
+    # ID should be a valid UUID object
     assert conversation.id is not None
-    # Should be able to parse as UUID
-    uuid_obj = UUID(conversation.id) if isinstance(conversation.id, str) else conversation.id
-    assert isinstance(uuid_obj, UUID)
+    assert isinstance(conversation.id, UUID)
+
+
+def test_conversation_messages_relationship():
+    """Test conversation relationship to messages"""
+    user_id = uuid4()
+    conversation = Conversation(user_id=user_id)
+    assert hasattr(conversation, "messages")
+    # Initially empty
+    assert conversation.messages == []

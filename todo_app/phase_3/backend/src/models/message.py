@@ -5,9 +5,9 @@ Phase 3 - Task 1.2 GREEN phase
 
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
-from uuid import uuid4
+from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Column, Enum as SQLEnum, Relationship
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from models.conversation import Conversation
@@ -24,17 +24,17 @@ class Message(SQLModel, table=True):
 
     __tablename__ = "messages"
 
-    id: str = Field(
-        default_factory=lambda: str(uuid4()),
+    id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
         description="Unique message identifier"
     )
-    conversation_id: str = Field(
+    conversation_id: UUID = Field(
         index=True,
         foreign_key="conversations.id",
         description="Conversation this message belongs to"
     )
-    user_id: str = Field(
+    user_id: UUID = Field(
         index=True,
         description="User who owns this message (FK to users.id from Phase 2)"
     )
@@ -53,5 +53,5 @@ class Message(SQLModel, table=True):
         description="Message creation timestamp"
     )
 
-    # Relationship to conversation (will be completed after circular import resolution)
-    # conversation: "Conversation" = Relationship(back_populates="messages")
+    # Relationship to conversation
+    conversation: Optional["Conversation"] = Relationship(back_populates="messages")

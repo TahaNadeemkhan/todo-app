@@ -18,58 +18,58 @@ Implementation decomposed into atomic, independently completable tasks following
 
 **Goal**: Create database schema for conversations and messages
 
-### [ ] [T001] [P1] [US1] Create Conversation SQLModel
+### [x] [T001] [P1] [US1] Create Conversation SQLModel
 - File: `backend/src/models/conversation.py`
 - Define Conversation model with fields: id (UUID), user_id (FK), created_at, updated_at
 - Add relationship to Message model
 - Ensure user_id is indexed for efficient queries
 
-### [ ] [T002] [P1] [US1] Write tests for Conversation model
+### [x] [T002] [P1] [US1] Write tests for Conversation model
 - File: `backend/tests/unit/models/test_conversation.py`
 - Test: conversation creation with valid user_id
 - Test: auto-generated UUID and timestamps
 - Test: user_id index exists
 
-### [ ] [T003] [P1] [US1] Create Message SQLModel with MessageRole enum
+### [x] [T003] [P1] [US1] Create Message SQLModel with MessageRole enum
 - File: `backend/src/models/message.py`
 - Define MessageRole enum (USER, ASSISTANT)
 - Define Message model with fields: id (UUID), conversation_id (FK), user_id (FK), role, content (max 2000 chars), created_at
 - Ensure conversation_id, user_id, and created_at are indexed
 
-### [ ] [T004] [P1] [US1] Write tests for Message model
+### [x] [T004] [P1] [US1] Write tests for Message model
 - File: `backend/tests/unit/models/test_message.py`
 - Test: message creation with valid fields
 - Test: MessageRole enum validation
 - Test: content max length (2000 chars)
 - Test: required indexes exist
 
-### [ ] [T005] [P1] [US1] Create ConversationRepository
+### [x] [T005] [P1] [US1] Create ConversationRepository
 - File: `backend/src/repositories/conversation_repository.py`
 - Implement: create_conversation(user_id) → Conversation
 - Implement: get_by_id(conversation_id) → Conversation | None
 - Implement: get_by_user(user_id, limit, offset) → list[Conversation]
 - Implement: delete_conversation(conversation_id) → bool
 
-### [ ] [T006] [P1] [US1] Write tests for ConversationRepository
+### [x] [T006] [P1] [US1] Write tests for ConversationRepository
 - File: `backend/tests/unit/repositories/test_conversation_repository.py`
 - Test: create conversation returns valid Conversation
 - Test: get_by_id returns None for non-existent ID
 - Test: get_by_user returns paginated results
 - Test: delete_conversation removes conversation
 
-### [ ] [T007] [P1] [US1] Create MessageRepository
+### [x] [T007] [P1] [US1] Create MessageRepository
 - File: `backend/src/repositories/message_repository.py`
 - Implement: create_message(conversation_id, user_id, role, content) → Message
 - Implement: get_by_conversation(conversation_id, limit, offset) → list[Message]
 - Implement: get_history(conversation_id) → list[Message] (ordered by created_at)
 
-### [ ] [T008] [P1] [US1] Write tests for MessageRepository
+### [x] [T008] [P1] [US1] Write tests for MessageRepository
 - File: `backend/tests/unit/repositories/test_message_repository.py`
 - Test: create_message returns valid Message
 - Test: get_by_conversation returns paginated messages
 - Test: get_history returns messages in chronological order
 
-### [ ] [T009] [P1] [Foundation] Create Alembic migration for Conversation and Message tables
+### [x] [T009] [P1] [Foundation] Create Alembic migration for Conversation and Message tables
 - File: `backend/alembic/versions/xxx_add_conversation_message_tables.py`
 - Add conversations table with indexes
 - Add messages table with indexes and foreign keys
@@ -77,11 +77,44 @@ Implementation decomposed into atomic, independently completable tasks following
 
 ---
 
+## ✅ Phase 1 Checkpoint
+
+**Run & Verify:**
+```bash
+cd todo_app/phase_3/backend
+
+# Run all model tests
+PYTHONPATH=src uv run pytest tests/unit/models/ -v
+
+# Run repository tests
+PYTHONPATH=src uv run pytest tests/unit/repositories/ -v
+
+# Apply migration
+uv run alembic upgrade head
+
+# Verify tables created
+psql $DATABASE_URL -c "\dt"  # Should show conversations and messages tables
+```
+
+**Expected Results:**
+- ✅ All model tests passing (13+ tests)
+- ✅ All repository tests passing (6+ tests)
+- ✅ Database tables created with proper indexes
+- ✅ Foreign key constraints in place
+
+**Manual Checks:**
+- [ ] Can create Conversation with user_id
+- [ ] Can create Message with conversation_id and role
+- [ ] Repositories handle pagination correctly
+- [ ] Timestamps auto-generate on creation
+
+---
+
 ## Phase 2: MCP Server - AI Agent Tools
 
 **Goal**: Implement 5 MCP tools for task management with email integration
 
-### [ ] [T010] [P1] [US1] Define Pydantic schemas for MCP tools
+### [x] [T010] [P1] [US1] Define Pydantic schemas for MCP tools
 - File: `backend/src/mcp_server/schemas.py`
 - AddTaskInput/Output, ListTasksInput/Output, CompleteTaskInput/Output, DeleteTaskInput/Output, UpdateTaskInput/Output
 - Include user_id validation in all schemas
@@ -153,6 +186,38 @@ Implementation decomposed into atomic, independently completable tasks following
 
 ---
 
+## ✅ Phase 2 Checkpoint
+
+**Run & Verify:**
+```bash
+cd todo_app/phase_3/backend
+
+# Run all MCP tool tests
+PYTHONPATH=src uv run pytest tests/unit/mcp/ -v
+
+# Test MCP server initialization
+PYTHONPATH=src uv run python -c "from mcp_server.server import get_mcp_tools; print(f'Loaded {len(get_mcp_tools())} tools')"
+
+# Test individual tools (mock test)
+PYTHONPATH=src uv run pytest tests/unit/mcp/test_add_task.py -v
+```
+
+**Expected Results:**
+- ✅ All MCP tool tests passing (12+ tests)
+- ✅ 5 tools registered successfully
+- ✅ Email notification triggered in add_task
+- ✅ Security validation works (user_id mismatch blocked)
+
+**Manual Checks:**
+- [ ] add_task creates task and triggers email
+- [ ] list_tasks filters by user and status
+- [ ] complete_task updates task status
+- [ ] delete_task removes task
+- [ ] update_task modifies task fields
+- [ ] All tools validate user ownership
+
+---
+
 ## Phase 3: Chat Service - AI Orchestration
 
 **Goal**: Implement stateless AI chat endpoint with conversation persistence
@@ -190,6 +255,45 @@ Implementation decomposed into atomic, independently completable tasks following
 - Test: continues existing conversation
 - Test: validates JWT user_id matches path parameter
 - Test: returns 403 if user_id mismatch
+
+---
+
+## ✅ Phase 3 Checkpoint
+
+**Run & Verify:**
+```bash
+cd todo_app/phase_3/backend
+
+# Run chat service tests
+PYTHONPATH=src uv run pytest tests/unit/services/test_chat_service.py -v
+
+# Run integration tests
+PYTHONPATH=src uv run pytest tests/integration/test_chat_endpoint.py -v
+
+# Start backend server
+PYTHONPATH=src uv run uvicorn src.main:app --reload
+
+# Test chat endpoint (in another terminal)
+curl -X POST http://localhost:8000/api/{user_id}/chat \
+  -H "Authorization: Bearer YOUR_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Task add karo: Buy groceries"}'
+```
+
+**Expected Results:**
+- ✅ ChatService tests passing (4+ tests)
+- ✅ Integration tests passing (4+ tests)
+- ✅ Chat endpoint returns conversation_id and AI response
+- ✅ Multilingual prompt works (English + Urdu)
+- ✅ Conversation persisted in database
+- ✅ AI agent calls MCP tools successfully
+
+**Manual Checks:**
+- [ ] English message: "Add task: Buy milk" → Task created
+- [ ] Urdu message: "Task add karo" → Response in Urdu
+- [ ] Conversation history loaded correctly
+- [ ] JWT validation working
+- [ ] Tool calls logged in response
 
 ---
 
@@ -246,6 +350,50 @@ Implementation decomposed into atomic, independently completable tasks following
 
 ---
 
+## ✅ Phase 4 Checkpoint
+
+**Run & Verify:**
+```bash
+cd todo_app/phase_3/frontend
+
+# Install dependencies
+npm install
+
+# Run frontend dev server
+npm run dev
+
+# Run frontend tests
+npm test
+
+# Build for production
+npm run build
+```
+
+**Expected Results:**
+- ✅ Frontend compiles without errors
+- ✅ Chat page renders at /chat
+- ✅ Messages display correctly (user + assistant)
+- ✅ Send button works
+- ✅ Voice input button appears (if browser supports)
+
+**Manual Checks:**
+- [ ] Open http://localhost:3000/chat
+- [ ] Type message "Add task: Test" → AI responds
+- [ ] Conversation history persists on refresh
+- [ ] Click microphone → Voice recognition starts
+- [ ] Speak "Add task Buy milk" → Text appears in input
+- [ ] Markdown rendering works in AI responses
+- [ ] Loading states show during API calls
+- [ ] Error messages display on failure
+
+**Browser Test:**
+- [ ] Chrome: Voice input works
+- [ ] Edge: Voice input works
+- [ ] Safari: Graceful fallback if no voice support
+- [ ] Mobile: Touch-friendly interface
+
+---
+
 ## Phase 5: Integration & Polish
 
 **Goal**: Connect Phase 3 with Phase 2 and add final enhancements
@@ -281,6 +429,60 @@ Implementation decomposed into atomic, independently completable tasks following
 - Containerize Phase 3 backend
 - Configure environment variables for production
 - Document deployment steps
+
+---
+
+## ✅ Phase 5 Checkpoint (Final Integration)
+
+**Run & Verify:**
+```bash
+# Run full E2E test
+cd todo_app/phase_3/backend
+PYTHONPATH=src uv run pytest tests/e2e/test_chat_flow.py -v
+
+# Test Phase 2 + Phase 3 integration
+# 1. Start Phase 2 backend (on port 8000)
+cd todo_app/phase_2/backend
+uv run uvicorn src.todo_app.main:app --port 8000
+
+# 2. Start Phase 3 backend (on port 8001)
+cd todo_app/phase_3/backend
+PYTHONPATH=src uv run uvicorn src.main:app --port 8001
+
+# 3. Start frontend (connects to both backends)
+cd todo_app/phase_2/frontend
+npm run dev
+
+# Test complete flow
+curl -X POST http://localhost:8001/api/{user_id}/chat \
+  -H "Authorization: Bearer JWT_FROM_PHASE2" \
+  -d '{"message": "Add task: Integration test"}'
+```
+
+**Expected Results:**
+- ✅ E2E test passes (full flow: login → chat → task created → email sent)
+- ✅ Phase 2 and Phase 3 share same database
+- ✅ JWT from Phase 2 works in Phase 3
+- ✅ Chat creates tasks visible in Phase 2 dashboard
+- ✅ Email notifications working
+- ✅ Docker containers build and run
+
+**Manual Checks:**
+- [ ] Login via Phase 2 → Get JWT
+- [ ] Use JWT in Phase 3 chat endpoint
+- [ ] Create task via chat: "Add task: Test integration"
+- [ ] Check Phase 2 dashboard → Task appears
+- [ ] Check email → Notification received
+- [ ] Voice input works in production build
+- [ ] All error states handled gracefully
+
+**Production Readiness:**
+- [ ] Environment variables configured
+- [ ] Database migrations applied
+- [ ] Docker images built
+- [ ] SSL/HTTPS configured
+- [ ] Rate limiting enabled
+- [ ] Monitoring/logging set up
 
 ---
 

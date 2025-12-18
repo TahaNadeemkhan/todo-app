@@ -4,7 +4,7 @@ Task 1.2: Message Model
 """
 
 import pytest
-from uuid import uuid4
+from uuid import uuid4, UUID
 from datetime import datetime
 from pydantic import ValidationError
 from models.message import Message, MessageRole
@@ -12,8 +12,8 @@ from models.message import Message, MessageRole
 
 def test_message_creation():
     """Test message model instantiation with required fields"""
-    conversation_id = str(uuid4())
-    user_id = str(uuid4())
+    conversation_id = uuid4()
+    user_id = uuid4()
     message = Message(
         conversation_id=conversation_id,
         user_id=user_id,
@@ -22,8 +22,11 @@ def test_message_creation():
     )
 
     assert message.id is not None
+    assert isinstance(message.id, UUID)
     assert message.conversation_id == conversation_id
+    assert isinstance(message.conversation_id, UUID)
     assert message.user_id == user_id
+    assert isinstance(message.user_id, UUID)
     assert message.role == MessageRole.USER
     assert message.content == "Hello, world!"
     assert message.created_at is not None
@@ -40,8 +43,8 @@ def test_message_role_enum():
 
 def test_message_role_validation():
     """Test message role must be valid enum value"""
-    conversation_id = str(uuid4())
-    user_id = str(uuid4())
+    conversation_id = uuid4()
+    user_id = uuid4()
 
     # Valid roles should work
     user_msg = Message(
@@ -63,8 +66,8 @@ def test_message_role_validation():
 
 def test_message_content_max_length():
     """Test message content has max length constraint"""
-    conversation_id = str(uuid4())
-    user_id = str(uuid4())
+    conversation_id = uuid4()
+    user_id = uuid4()
 
     # 2000 characters should be allowed
     long_content = "a" * 2000
@@ -104,8 +107,8 @@ def test_message_created_at_indexed():
 
 def test_message_id_is_uuid():
     """Test message ID is a valid UUID"""
-    conversation_id = str(uuid4())
-    user_id = str(uuid4())
+    conversation_id = uuid4()
+    user_id = uuid4()
     message = Message(
         conversation_id=conversation_id,
         user_id=user_id,
@@ -113,8 +116,21 @@ def test_message_id_is_uuid():
         content="Test"
     )
 
-    # ID should be a valid UUID string
-    from uuid import UUID
+    # ID should be a valid UUID object
     assert message.id is not None
-    uuid_obj = UUID(message.id) if isinstance(message.id, str) else message.id
-    assert isinstance(uuid_obj, UUID)
+    assert isinstance(message.id, UUID)
+
+
+def test_message_conversation_relationship():
+    """Test message relationship to conversation"""
+    conversation_id = uuid4()
+    user_id = uuid4()
+    message = Message(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        role=MessageRole.USER,
+        content="Test"
+    )
+    assert hasattr(message, "conversation")
+    # Initially None until connected in a session
+    assert message.conversation is None
