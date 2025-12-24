@@ -11,7 +11,7 @@ class MessageRepository:
     async def create(
         self,
         conversation_id: UUID,
-        user_id: UUID,
+        user_id: str,
         role: MessageRole,
         content: str
     ) -> Message:

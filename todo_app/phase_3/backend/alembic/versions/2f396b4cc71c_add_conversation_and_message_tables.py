@@ -16,17 +16,23 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Create message_role enum
-    sa.Enum('user', 'assistant', name='messagerole').create(op.get_bind(), checkfirst=True)
+    # Safely create message_role enum if not exists
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE messagerole AS ENUM ('user', 'assistant');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # Create conversations table
     op.create_table(
         'conversations',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('user_id', sa.Text(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     )
     op.create_index('idx_conversations_user_id', 'conversations', ['user_id'])
 
@@ -35,12 +41,12 @@ def upgrade() -> None:
         'messages',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('conversation_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('role', sa.Enum('user', 'assistant', name='messagerole'), nullable=False),
+        sa.Column('user_id', sa.Text(), nullable=False),
+        sa.Column('role', postgresql.ENUM('user', 'assistant', name='messagerole', create_type=False), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(['conversation_id'], ['conversations.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
         sa.CheckConstraint('char_length(content) > 0', name='content_not_empty'),
         sa.CheckConstraint('char_length(content) <= 2000', name='content_max_length'),
     )

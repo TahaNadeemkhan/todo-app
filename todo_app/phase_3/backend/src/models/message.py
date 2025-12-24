@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Column, Enum as SQLEnum, Relationship
+from sqlalchemy import DateTime
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -15,8 +16,11 @@ if TYPE_CHECKING:
 
 class MessageRole(str, PyEnum):
     """Enum for message role (user or assistant)."""
-    USER = "user"
-    ASSISTANT = "assistant"
+    user = "user"
+    assistant = "assistant"
+
+    def __str__(self):
+        return self.value
 
 
 class Message(SQLModel, table=True):
@@ -34,9 +38,9 @@ class Message(SQLModel, table=True):
         foreign_key="conversations.id",
         description="Conversation this message belongs to"
     )
-    user_id: UUID = Field(
+    user_id: str = Field(
         index=True,
-        description="User who owns this message (FK to users.id from Phase 2)"
+        description="User who owns this message (FK to user.id from Phase 2)"
     )
     role: MessageRole = Field(
         sa_column=Column(SQLEnum(MessageRole)),
@@ -48,8 +52,7 @@ class Message(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        index=True,  # Indexed for temporal queries
+        sa_column=Column(DateTime(timezone=True), nullable=False, index=True),
         description="Message creation timestamp"
     )
 

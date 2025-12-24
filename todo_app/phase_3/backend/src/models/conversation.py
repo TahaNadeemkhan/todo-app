@@ -6,6 +6,7 @@ Phase 3 - Task 1.1 GREEN phase
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Relationship
+from sqlalchemy import Column, DateTime
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
@@ -22,15 +23,15 @@ class Conversation(SQLModel, table=True):
         primary_key=True,
         description="Unique conversation identifier"
     )
-    user_id: UUID = Field(index=True)  # Required field (no default, indexed)
+    user_id: str = Field(index=True)  # Required field (no default, indexed)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
         description="Conversation creation timestamp"
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
         description="Last update timestamp"
     )
 

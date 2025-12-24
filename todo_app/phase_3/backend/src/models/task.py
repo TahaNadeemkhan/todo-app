@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, DateTime
 from typing import Optional
-from uuid import UUID, uuid4
 
 class Task(SQLModel, table=True):
     """Task entity for todo items."""
 
     __tablename__ = "tasks"
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(index=True, nullable=False)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(index=True, nullable=False)
     title: str = Field(nullable=False, max_length=255)
     description: Optional[str] = Field(default=None, max_length=2000)
     completed: bool = Field(default=False)
@@ -24,10 +24,9 @@ class Task(SQLModel, table=True):
 
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=lambda: datetime.now(timezone.utc)),
     )

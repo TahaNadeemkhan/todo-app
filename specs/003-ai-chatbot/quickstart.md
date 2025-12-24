@@ -26,17 +26,19 @@ EMAIL_SERVICE_URL=http://localhost:8001/send-email
 ### 2. Backend Setup
 
 ```bash
+cd todo_app
+cd phase_3
 cd backend
 
 # Install dependencies
-uv pip install openai-agents-sdk mcp sqlmodel
+uv add openai-agents-sdk mcp sqlmodel
 
 # Run database migration
 uv run alembic revision --autogenerate -m "Add conversation and message tables"
 uv run alembic upgrade head
 
 # Start backend
-uv run uvicorn src.main:app --reload --port 8000
+PYTHONPATH=src uv run uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### 3. Frontend Setup

@@ -8,7 +8,7 @@ class ConversationRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user_id: UUID) -> Conversation:
+    async def create(self, user_id: str) -> Conversation:
         """Create a new conversation for a user."""
         conversation = Conversation(user_id=user_id)
         self.session.add(conversation)
@@ -22,7 +22,7 @@ class ConversationRepository:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def get_by_user(self, user_id: UUID, limit: int = 20, offset: int = 0) -> List[Conversation]:
+    async def get_by_user(self, user_id: str, limit: int = 20, offset: int = 0) -> List[Conversation]:
         """Get conversations for a user with pagination."""
         statement = (
             select(Conversation)

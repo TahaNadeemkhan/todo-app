@@ -67,17 +67,15 @@ async def add_task(
     # the Auth middleware would verify the JWT and ensure the caller is `user_id`.
     # Here, we accept `user_id` as an arg.
     
-    # Convert string to UUID for internal use
-    try:
-        user_uuid = UUID(user_id)
-    except ValueError:
+    # Use string user_id directly (Phase 2 uses string IDs)
+    if not user_id or not isinstance(user_id, str):
         raise ValueError("Invalid user_id format")
 
     # 2. Database Operation (Stateless)
     async for session in get_async_session():
         repo = TaskRepository(session)
         task = await repo.create(
-            user_id=user_uuid,
+            user_id=user_id,
             title=title,
             description=description
         )

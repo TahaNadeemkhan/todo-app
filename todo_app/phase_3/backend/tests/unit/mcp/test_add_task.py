@@ -40,5 +40,9 @@ async def test_add_task_success(mock_session):
 
 @pytest.mark.asyncio
 async def test_add_task_invalid_uuid():
+    # Now that we accept strings, we should test empty string or non-string
     with pytest.raises(ValueError, match="Invalid user_id format"):
-        await add_task(user_id="invalid-uuid", title="Test")
+        await add_task(user_id="", title="Test Task")
+    
+    with pytest.raises(ValueError, match="Invalid user_id format"):
+        await add_task(user_id=None, title="Test Task")

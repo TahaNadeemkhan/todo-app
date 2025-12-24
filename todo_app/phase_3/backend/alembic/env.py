@@ -21,6 +21,13 @@ config = context.config
 # Set sqlalchemy.url from env
 database_url = os.getenv("DATABASE_URL")
 if database_url:
+    # Clean sslmode from URL as we pass it in connect_args
+    if "sslmode" in database_url:
+        import re
+        database_url = re.sub(r"[?&]sslmode=[^&]+", "", database_url)
+        if database_url.endswith("?") or database_url.endswith("&"):
+            database_url = database_url[:-1]
+    
     config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
@@ -73,6 +80,7 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"sslmode": "require"},
     )
 
     with connectable.connect() as connection:
