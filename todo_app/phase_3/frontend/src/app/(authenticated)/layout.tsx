@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/sidebar";
+import { FloatingChatbot } from "@/components/FloatingChatbot";
 
 export default function AuthenticatedLayout({
   children,
@@ -14,6 +15,9 @@ export default function AuthenticatedLayout({
           {children}
         </div>
       </main>
+
+      {/* Floating AI Chatbot - appears on all authenticated pages */}
+      <FloatingChatbot />
     </div>
   );
 }

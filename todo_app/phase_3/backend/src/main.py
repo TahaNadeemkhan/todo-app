@@ -6,11 +6,11 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.routes import chat
 from mcp_server.server import mcp_app
 from db import get_async_session
 from chatkit_store import DatabaseChatKitStore
-from chatkit_server import TodoChatKitServer
+from chatkit_server import TodoChatKitServer, TodoChatKitServerWithMCP
+from api.routes import tasks
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,19 +37,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount the chat router (existing custom API)
-app.include_router(chat.router, prefix="/api", tags=["chat"])
+# Include task management API routes
+app.include_router(tasks.router)
 
 # We can also mount the MCP server if we want to expose it directly (optional)
 # app.mount("/mcp", mcp_app)
 
 
-@app.post("/chatkit")
+@app.post("/chatkit", include_in_schema=False)
 async def chatkit_endpoint(
     request: Request,
     session: AsyncSession = Depends(get_async_session)
 ):
     """ChatKit endpoint with database-backed conversation storage.
+
+    NOTE: This endpoint is designed for ChatKit React components.
+    Do not test directly via Swagger - use the frontend ChatKit UI instead.
 
     This endpoint integrates OpenAI ChatKit with:
     - PostgreSQL database for persistent conversation storage
@@ -64,8 +67,8 @@ async def chatkit_endpoint(
     # Create database-backed store
     store = DatabaseChatKitStore(session)
 
-    # Initialize ChatKit server
-    chat_server = TodoChatKitServer(store, api_key)
+    # Initialize ChatKit server with MCP tools integration
+    chat_server = TodoChatKitServerWithMCP(store, api_key)
 
     # Handle ChatKit request
     payload = await request.body()
