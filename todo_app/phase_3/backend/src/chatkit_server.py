@@ -144,10 +144,12 @@ Your goal is to help the user manage their tasks using the provided tools.
         for item in items:
             if isinstance(item, UserMessageItem):
                 # Extract text from user message
+                # ChatKit uses "input_text" for user messages, not "text"
                 text = ""
                 for content in item.content:
-                    if content.type == "text":
-                        text = content.text
+                    content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                    if content_type in ("text", "input_text"):
+                        text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
                         break
                 if text:
                     chat_messages.append({"role": "user", "content": text})
@@ -156,19 +158,35 @@ Your goal is to help the user manage their tasks using the provided tools.
                 # Extract text from assistant message
                 text = ""
                 for content in item.content:
-                    if content.type == "text":
-                        text = content.text
+                    content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                    if content_type == "text":
+                        text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
                         break
                 if text:
                     chat_messages.append({"role": "assistant", "content": text})
 
+        # If no messages from history, add the current input message directly
+        if len(chat_messages) == 1 and input_user_message:
+            # Only system message - add the current user message
+            for content in input_user_message.content:
+                content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                if content_type in ("text", "input_text"):
+                    text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
+                    if text:
+                        chat_messages.append({"role": "user", "content": text})
+                        break
+
+        logger.info(f"Prepared {len(chat_messages)} messages for Gemini API")
+
         # Create assistant message for response
-        assistant_id = self.store.generate_item_id("assistant_message", thread, user_id)
+        # Generate ID manually since store.generate_item_id has limited item types
+        import uuid
+        assistant_id = f"msg_{uuid.uuid4().hex[:8]}"
         assistant_item = AssistantMessageItem(
             id=assistant_id,
             thread_id=thread_id,
             created_at=datetime.now(timezone.utc),
-            content=[AssistantMessageContent(type="text", text="")]
+            content=[AssistantMessageContent(type="output_text", text="")]
         )
 
         yield ThreadItemAddedEvent(item=assistant_item)
@@ -179,11 +197,11 @@ Your goal is to help the user manage their tasks using the provided tools.
             full_response += chunk
 
             # Update assistant message content
-            assistant_item.content = [AssistantMessageContent(type="text", text=full_response)]
+            assistant_item.content = [AssistantMessageContent(type="output_text", text=full_response)]
             yield ThreadItemAddedEvent(item=assistant_item)
 
         # Final update - message is complete
-        assistant_item.content = [AssistantMessageContent(type="text", text=full_response)]
+        assistant_item.content = [AssistantMessageContent(type="output_text", text=full_response)]
 
 
 class TodoChatKitServerWithMCP(TodoChatKitServer):
@@ -270,10 +288,12 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
         for item in items:
             if isinstance(item, UserMessageItem):
                 # Extract text from user message
+                # ChatKit uses "input_text" for user messages, not "text"
                 text = ""
                 for content in item.content:
-                    if content.type == "text":
-                        text = content.text
+                    content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                    if content_type in ("text", "input_text"):
+                        text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
                         break
                 if text:
                     chat_messages.append({"role": "user", "content": text})
@@ -282,11 +302,25 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
                 # Extract text from assistant message
                 text = ""
                 for content in item.content:
-                    if content.type == "text":
-                        text = content.text
+                    content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                    if content_type == "text":
+                        text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
                         break
                 if text:
                     chat_messages.append({"role": "assistant", "content": text})
+
+        # If no messages from history, add the current input message directly
+        if len(chat_messages) == 1 and input_user_message:
+            # Only system message - add the current user message
+            for content in input_user_message.content:
+                content_type = getattr(content, 'type', None) or (content.get('type') if isinstance(content, dict) else None)
+                if content_type in ("text", "input_text"):
+                    text = getattr(content, 'text', None) or (content.get('text') if isinstance(content, dict) else "")
+                    if text:
+                        chat_messages.append({"role": "user", "content": text})
+                        break
+
+        logger.info(f"Prepared {len(chat_messages)} messages for Gemini API (MCP)")
 
         # Get MCP tools
         tools = self._get_openai_tools()
@@ -342,12 +376,14 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
                 break
 
         # Create assistant message for response
-        assistant_id = self.store.generate_item_id("assistant_message", thread, user_id)
+        # Generate ID manually since store.generate_item_id has limited item types
+        import uuid
+        assistant_id = f"msg_{uuid.uuid4().hex[:8]}"
         assistant_item = AssistantMessageItem(
             id=assistant_id,
             thread_id=thread_id,
             created_at=datetime.now(timezone.utc),
-            content=[AssistantMessageContent(type="text", text="")]
+            content=[AssistantMessageContent(type="output_text", text="")]
         )
 
         yield ThreadItemAddedEvent(item=assistant_item)
@@ -357,8 +393,8 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
         streamed_text = ""
         for word in words:
             streamed_text += word + " "
-            assistant_item.content = [AssistantMessageContent(type="text", text=streamed_text.strip())]
+            assistant_item.content = [AssistantMessageContent(type="output_text", text=streamed_text.strip())]
             yield ThreadItemAddedEvent(item=assistant_item)
 
         # Final update with complete message
-        assistant_item.content = [AssistantMessageContent(type="text", text=final_response)]
+        assistant_item.content = [AssistantMessageContent(type="output_text", text=final_response)]
