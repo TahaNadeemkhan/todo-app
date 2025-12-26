@@ -84,8 +84,16 @@ class DatabaseChatKitStore(Store[str]):
         limit: int,
         after: str | None,
         context: str,
+        order: str = "desc",  # Added missing parameter
     ) -> Page[Thread]:
-        """Load all threads for a user with pagination."""
+        """Load all threads for a user with pagination.
+
+        Args:
+            limit: Maximum number of threads to return
+            after: Pagination cursor
+            context: User ID
+            order: Sort order - "desc" (newest first) or "asc" (oldest first)
+        """
         user_id = context
         offset = 0
         if after:
@@ -101,6 +109,10 @@ class DatabaseChatKitStore(Store[str]):
         )
 
         threads = [self._conversation_to_thread(c) for c in conversations]
+
+        # Apply ordering (repository returns newest first by default)
+        if order == "asc":
+            threads.reverse()
 
         # Calculate next cursor and has_more
         has_more = len(threads) == limit

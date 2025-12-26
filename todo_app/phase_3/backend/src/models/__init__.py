@@ -2,5 +2,7 @@
 
 from models.conversation import Conversation
 from models.message import Message, MessageRole
+from models.notification import Notification
+from models.task import Task
 
-__all__ = ["Conversation", "Message", "MessageRole"]
+__all__ = ["Conversation", "Message", "MessageRole", "Notification", "Task"]

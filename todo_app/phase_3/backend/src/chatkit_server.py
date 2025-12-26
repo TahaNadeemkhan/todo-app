@@ -55,7 +55,7 @@ class TodoChatKitServer(ChatKitServer):
 
         # Use correct Gemini model name
         self.model = OpenAIChatCompletionsModel(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             openai_client=self.client
         )
 

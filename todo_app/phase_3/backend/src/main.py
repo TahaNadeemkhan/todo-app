@@ -10,7 +10,7 @@ from mcp_server.server import mcp_app
 from db import get_async_session
 from chatkit_store import DatabaseChatKitStore
 from chatkit_server import TodoChatKitServer, TodoChatKitServerWithMCP
-from api.routes import tasks
+from api.routes import tasks, notifications
 
 # Load environment variables from .env file
 load_dotenv()
@@ -39,6 +39,8 @@ app.add_middleware(
 
 # Include task management API routes
 app.include_router(tasks.router)
+# Include notification API routes
+app.include_router(notifications.router)
 
 # We can also mount the MCP server if we want to expose it directly (optional)
 # app.mount("/mcp", mcp_app)
@@ -56,7 +58,7 @@ async def chatkit_endpoint(
 
     This endpoint integrates OpenAI ChatKit with:
     - PostgreSQL database for persistent conversation storage
-    - Gemini 2.0 Flash model for AI responses
+    - Gemini 2.5 Flash model for AI responses
     - Multilingual support (English + Urdu)
     """
     # Get Gemini API key from environment
@@ -70,9 +72,9 @@ async def chatkit_endpoint(
     # Initialize ChatKit server with MCP tools integration
     chat_server = TodoChatKitServerWithMCP(store, api_key)
 
-    # Handle ChatKit request
-    payload = await request.body()
-    result = await chat_server.process(payload, context="")
+    # Handle ChatKit request using the base class process method
+    payload = await request.body()  # Get raw bytes for ChatKitServer
+    result = await chat_server.process(payload, context="")  # Base class method
 
     return StreamingResponse(result, media_type="text/event-stream")
 

@@ -21,14 +21,13 @@ const getBaseURL = () => {
 export const auth = betterAuth({
   baseURL: getBaseURL(),
   database: new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL + "&connect_timeout=10&statement_timeout=10000",
     ssl: {
       rejectUnauthorized: false, // Allow self-signed certs for Neon
     },
-    max: 3, // Slightly larger pool
-    idleTimeoutMillis: 60000, // 60 seconds idle timeout
-    connectionTimeoutMillis: 30000, // 30 seconds connection timeout (increased)
-    keepAlive: true, // Keep connection alive
+    max: 2,
+    idleTimeoutMillis: 20000,
+    connectionTimeoutMillis: 10000, // 10 seconds for initial connection
   }),
   emailAndPassword: {
     enabled: true,

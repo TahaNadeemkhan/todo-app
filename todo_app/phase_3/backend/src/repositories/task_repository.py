@@ -61,11 +61,15 @@ class TaskRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def update(self, task_id: int, **updates) -> Task:
-        """Update task."""
+    async def update(self, task_id: int, user_id: str, **updates) -> Task:
+        """Update task and verify user ownership."""
         task = await self.get_by_id(task_id)
         if not task:
             raise ValueError(f"Task {task_id} not found")
+
+        # Verify user ownership
+        if task.user_id != user_id:
+            raise ValueError(f"Task {task_id} does not belong to user {user_id}")
 
         for key, value in updates.items():
             if hasattr(task, key):
@@ -75,11 +79,15 @@ class TaskRepository:
         await self.session.refresh(task)
         return task
 
-    async def delete(self, task_id: int) -> bool:
-        """Delete task."""
+    async def delete(self, task_id: int, user_id: str) -> bool:
+        """Delete task and verify user ownership."""
         task = await self.get_by_id(task_id)
         if not task:
             return False
+
+        # Verify user ownership
+        if task.user_id != user_id:
+            raise ValueError(f"Task {task_id} does not belong to user {user_id}")
 
         await self.session.delete(task)
         await self.session.commit()

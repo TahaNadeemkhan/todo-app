@@ -15,7 +15,7 @@ class Task(SQLModel, table=True):
     completed: bool = Field(default=False)
 
     # New Fields for US9
-    due_date: Optional[datetime] = Field(default=None)
+    due_date: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     priority: str = Field(default="medium", max_length=20)
 
     # Notification settings

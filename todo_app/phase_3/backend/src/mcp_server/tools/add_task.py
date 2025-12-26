@@ -27,6 +27,7 @@ async def add_task(
     user_id: str,
     title: str,
     description: str | None = None,
+    notify_email: str | None = None
     # Context is injected by FastMCP if declared? 
     # FastMCP supports Context injection but usually via `ctx: Context` type hint.
     # Our requirements used `ToolContext`. We might need to adapt.
@@ -56,6 +57,7 @@ async def add_task(
         user_id: The authenticated user's ID (UUID string)
         title: Task title (required, 1-200 characters)
         description: Optional task description (max 1000 characters)
+        notify_email: Optional email address for task notifications
     """
     # NOTE: In a real FastMCP integration with an Agent, `context` usually comes from 
     # the request context (e.g. injected via a Context parameter or context var).
@@ -77,24 +79,26 @@ async def add_task(
         task = await repo.create(
             user_id=user_id,
             title=title,
-            description=description
+            description=description,
+            notify_email=notify_email
         )
 
-    # 3. Side Effect: Email Notification
+    # 3. Side Effect: Email Notification (only if email provided)
     email_sent = False
-    try:
-        asyncio.create_task(
-            email_service.send_notification(
-                to_email="user@example.com", 
-                notification_type="task_created",
-                task_title=task.title,
-                task_description=task.description
+    if notify_email:
+        try:
+            asyncio.create_task(
+                email_service.send_notification(
+                    to_email=notify_email,
+                    notification_type="task_created",
+                    task_title=task.title,
+                    task_description=task.description
+                )
             )
-        )
-        email_sent = True
-    except Exception as e:
-        logger.error(f"Failed to trigger email notification: {e}")
-        email_sent = False
+            email_sent = True
+        except Exception as e:
+            logger.error(f"Failed to trigger email notification: {e}")
+            email_sent = False
 
     return {
         "task_id": str(task.id),

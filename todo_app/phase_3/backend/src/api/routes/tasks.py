@@ -158,6 +158,7 @@ async def update_task(
     # Update task
     updated_task = await repo.update(
         task_id=task_id,
+        user_id=user_id,
         **update_data
     )
 
@@ -198,7 +199,7 @@ async def delete_task(
     notify_email = task.notify_email
     notifications_enabled = task.notifications_enabled
 
-    await repo.delete(task_id)
+    await repo.delete(task_id, user_id)
 
     # Send notification in background
     if notifications_enabled and notify_email:
@@ -235,6 +236,7 @@ async def complete_task(
     # Toggle completion
     updated_task = await repo.update(
         task_id=task_id,
+        user_id=user_id,
         completed=not task.completed
     )
 

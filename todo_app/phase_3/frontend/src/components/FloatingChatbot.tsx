@@ -3,21 +3,45 @@
 /**
  * Floating Chatbot Widget
  * Bottom-right floating chatbot for dashboard
+ *
+ * NOTE: ChatKit is a web component that only works in browser.
+ * Ensure this component is only rendered client-side.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle, X, Minimize2 } from "lucide-react";
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
+import {
+  CHATKIT_API_URL,
+  CHATKIT_API_DOMAIN_KEY,
+  CHATKIT_THEME,
+  CHATKIT_COMPOSER,
+  CHATKIT_START_SCREEN,
+} from "@/lib/chatkit-config";
+import { ChatKitDebug } from "./ChatKitDebug";
 
 export function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const chatKit = useChatKit({
+  // Ensure component only runs in browser
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // MINIMAL VALID CONFIG - Just API settings
+  const { control } = useChatKit({
     api: {
-      url: process.env.NEXT_PUBLIC_CHATKIT_API_URL || "/api/chatkit",
+      url: CHATKIT_API_URL,
+      domainKey: CHATKIT_API_DOMAIN_KEY,
     },
   });
+
+  // Don't render until mounted in browser
+  if (!isMounted) {
+    return null;
+  }
 
   if (!isOpen) {
     return (
@@ -67,7 +91,11 @@ export function FloatingChatbot() {
       {/* ChatKit Content */}
       {!isMinimized && (
         <div className="h-[calc(600px-64px)] overflow-hidden">
-          <ChatKit chatKit={chatKit} className="h-full" />
+          <ChatKit
+            control={control}
+            className="h-full w-full"
+            style={{ height: '100%', width: '100%', display: 'block' }}
+          />
         </div>
       )}
     </div>
