@@ -63,24 +63,33 @@ class DatabaseChatKitStore(Store[str]):
 
         ThreadItem is a Union type (UserMessageItem | AssistantMessageItem).
         We must instantiate the specific type based on the message role.
+
+        Based on actual ChatKit structure from debug logs, UserMessageItem requires:
+        - id, thread_id, created_at, type, content, attachments, quoted_text, inference_options
         """
         from chatkit.types import UserMessageTextContent
 
         if message.role == MessageRole.user:
-            # User message - use UserMessageTextContent with type="input_text"
+            # User message - provide all required fields
             return UserMessageItem(
                 id=str(message.id),
-                thread_id="",  # Will be set by ChatKit
+                thread_id=str(message.conversation_id),
                 created_at=message.created_at,
+                type="user_message",
                 content=[UserMessageTextContent(type="input_text", text=message.content)],
+                attachments=[],
+                quoted_text="",
+                inference_options={"tool_choice": None, "model": None},
             )
         else:
-            # Assistant message - use dict for content (ChatKit accepts this)
+            # Assistant message - provide all required fields
             return AssistantMessageItem(
                 id=str(message.id),
-                thread_id="",  # Will be set by ChatKit
+                thread_id=str(message.conversation_id),
                 created_at=message.created_at,
+                type="assistant_message",
                 content=[{"type": "text", "text": message.content}],
+                attachments=[],
             )
 
     async def load_thread(self, thread_id: str, context: str) -> ThreadMetadata | None:
