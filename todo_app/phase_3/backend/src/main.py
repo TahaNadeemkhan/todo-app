@@ -1,10 +1,11 @@
 import os
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
+from chatkit.server import NonStreamingResult
 
 from mcp_server.server import mcp_app
 from db import get_async_session
@@ -66,16 +67,34 @@ async def chatkit_endpoint(
     if not api_key:
         return {"error": "GEMINI_API_KEY not configured"}
 
+    # Extract user_id from request headers (Better Auth JWT)
+    # For development, use logged-in user's ID
+    authorization = request.headers.get("Authorization", "")
+    user_id = "XbN8PEmNydysjO4eQyFSV9bKNL6faSVe"  # Your actual user ID (tahanadeem2990@gmail.com)
+
+    # TODO: Extract user_id from JWT token for production
+    # if authorization.startswith("Bearer "):
+    #     token = authorization[7:]
+    #     user_id = extract_user_from_jwt(token)
+
     # Create database-backed store
     store = DatabaseChatKitStore(session)
 
     # Initialize ChatKit server with MCP tools integration
     chat_server = TodoChatKitServerWithMCP(store, api_key)
 
-    # Handle ChatKit request using the base class process method
+    # Handle ChatKit request with user context
     payload = await request.body()  # Get raw bytes for ChatKitServer
-    result = await chat_server.process(payload, context="")  # Base class method
+    result = await chat_server.process(payload, context=user_id)  # ✅ Pass user_id as context
 
+    # Check if result is non-streaming (e.g., threads.list, threads.create)
+    if isinstance(result, NonStreamingResult):
+        # NonStreamingResult is a dataclass, convert to dict manually
+        import dataclasses
+        result_dict = dataclasses.asdict(result) if dataclasses.is_dataclass(result) else {"result": str(result)}
+        return JSONResponse(content=result_dict)
+
+    # Return streaming response for chat messages
     return StreamingResponse(result, media_type="text/event-stream")
 
 

@@ -4,12 +4,16 @@ Maps ChatKit Store interface to PostgreSQL Conversation/Message models.
 """
 
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime, timezone
+import hashlib
+import logging
 
 from chatkit.store import Store
-from chatkit.types import Thread, ThreadItem, ThreadMetadata, Page
+from chatkit.types import Thread, ThreadItem, ThreadMetadata, Page, UserMessageItem, AssistantMessageItem
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from repositories.conversation_repository import ConversationRepository
 from repositories.message_repository import MessageRepository
@@ -31,30 +35,58 @@ class DatabaseChatKitStore(Store[str]):
         self.conversation_repo = ConversationRepository(session)
         self.message_repo = MessageRepository(session)
 
+    def _string_to_uuid(self, string_id: str) -> UUID:
+        """Convert any string to a deterministic UUID.
+
+        ChatKit generates thread IDs that are not valid UUIDs.
+        This method creates a deterministic UUID from any string.
+        """
+        try:
+            # Try to parse as UUID first
+            return UUID(string_id)
+        except ValueError:
+            # Generate deterministic UUID from string using MD5 hash
+            hash_bytes = hashlib.md5(string_id.encode()).digest()
+            return UUID(bytes=hash_bytes)
+
     def _conversation_to_thread(self, conversation: Conversation) -> Thread:
         """Convert Conversation model to ChatKit Thread."""
         return Thread(
             id=str(conversation.id),
             created_at=int(conversation.created_at.timestamp()),
             updated_at=int(conversation.updated_at.timestamp()),
+            items=Page(data=[], has_more=False, after=None),  # ✅ Page object, not list
         )
 
     def _message_to_thread_item(self, message: Message) -> ThreadItem:
-        """Convert Message model to ChatKit ThreadItem."""
-        return ThreadItem(
-            id=str(message.id),
-            role=message.role.value,  # "user" or "assistant"
-            content=[{"type": "text", "text": message.content}],
-            created_at=int(message.created_at.timestamp()),
-        )
+        """Convert Message model to ChatKit ThreadItem.
+
+        ThreadItem is a Union type (UserMessageItem | AssistantMessageItem).
+        We must instantiate the specific type based on the message role.
+        """
+        from chatkit.types import UserMessageTextContent
+
+        if message.role == MessageRole.user:
+            # User message - use UserMessageTextContent with type="input_text"
+            return UserMessageItem(
+                id=str(message.id),
+                thread_id="",  # Will be set by ChatKit
+                created_at=message.created_at,
+                content=[UserMessageTextContent(type="input_text", text=message.content)],
+            )
+        else:
+            # Assistant message - use dict for content (ChatKit accepts this)
+            return AssistantMessageItem(
+                id=str(message.id),
+                thread_id="",  # Will be set by ChatKit
+                created_at=message.created_at,
+                content=[{"type": "text", "text": message.content}],
+            )
 
     async def load_thread(self, thread_id: str, context: str) -> ThreadMetadata | None:
         """Load a thread by ID."""
         user_id = context
-        try:
-            conversation_uuid = UUID(thread_id)
-        except ValueError:
-            return None
+        conversation_uuid = self._string_to_uuid(thread_id)
 
         conversation = await self.conversation_repo.get_by_id(conversation_uuid)
         if not conversation or conversation.user_id != user_id:
@@ -71,9 +103,9 @@ class DatabaseChatKitStore(Store[str]):
             # Thread already exists, no need to create
             return
 
-        # Create new conversation with the provided thread ID
+        # Create new conversation with deterministic UUID from thread ID
         conversation = Conversation(
-            id=UUID(thread.id),
+            id=self._string_to_uuid(thread.id),
             user_id=user_id,
         )
         self.session.add(conversation)
@@ -130,10 +162,7 @@ class DatabaseChatKitStore(Store[str]):
     ) -> Page[ThreadItem]:
         """Load items for a thread with pagination."""
         user_id = context
-        try:
-            conversation_uuid = UUID(thread_id)
-        except ValueError:
-            return Page(data=[], has_more=False, after=None)
+        conversation_uuid = self._string_to_uuid(thread_id)
 
         # Verify thread belongs to user
         conversation = await self.conversation_repo.get_by_id(conversation_uuid)
@@ -169,29 +198,52 @@ class DatabaseChatKitStore(Store[str]):
     ) -> None:
         """Add an item to a thread (create new message)."""
         user_id = context
-        try:
-            conversation_uuid = UUID(thread_id)
-        except ValueError:
-            raise ValueError(f"Invalid thread_id: {thread_id}")
+        conversation_uuid = self._string_to_uuid(thread_id)  # ✅ Use helper method
 
         # Verify thread exists and belongs to user
         conversation = await self.conversation_repo.get_by_id(conversation_uuid)
         if not conversation or conversation.user_id != user_id:
             raise ValueError(f"Thread {thread_id} not found for user {user_id}")
 
-        # Extract text content from ThreadItem
+        # Extract text content from ThreadItem (Pydantic models, not dicts)
+        # DEBUG: Log the item structure
+        logger.info(f"=== add_thread_item DEBUG ===")
+        logger.info(f"item type = {type(item)}")
+        logger.info(f"item.__class__.__name__ = {item.__class__.__name__}")
+        logger.info(f"item.content type = {type(item.content)}")
+        logger.info(f"item.content length = {len(item.content) if hasattr(item.content, '__len__') else 'N/A'}")
+        logger.info(f"item.content = {item.content}")
+        logger.info(f"item dict = {item.model_dump() if hasattr(item, 'model_dump') else item.__dict__}")
+
         content_text = ""
-        for content_part in item.content:
-            if content_part.get("type") == "text":
-                content_text = content_part.get("text", "")
+        for idx, content_part in enumerate(item.content):
+            logger.info(f"content_part[{idx}] type = {type(content_part)}")
+            logger.info(f"content_part[{idx}] = {content_part}")
+            logger.info(f"content_part[{idx}] dict = {content_part.model_dump() if hasattr(content_part, 'model_dump') else content_part.__dict__ if hasattr(content_part, '__dict__') else 'no dict'}")
+
+            # content_part is a Pydantic object with .type and .text attributes
+            # ChatKit sends 'input_text' for user messages and 'text' for assistant messages
+            if hasattr(content_part, 'type') and content_part.type in ("text", "input_text"):
+                content_text = getattr(content_part, 'text', "")
+                logger.info(f"✅ Found text content (type={content_part.type}): '{content_text}'")
                 break
+            else:
+                logger.warning(f"⚠️ content_part type is {getattr(content_part, 'type', 'NONE')}, expected 'text' or 'input_text'")
 
-        # Convert role to MessageRole enum
-        role = MessageRole.user if item.role == "user" else MessageRole.assistant
+        logger.info(f"Final content_text = '{content_text}'")
+        logger.info(f"=== END DEBUG ===")
 
-        # Create message
+        # Validate content is not empty
+        if not content_text or not content_text.strip():
+            logger.error(f"❌ Content is empty! item.content was: {item.content}")
+            raise ValueError(f"Cannot save message with empty content. Item: {item.model_dump() if hasattr(item, 'model_dump') else item}")
+
+        # Convert role to MessageRole enum (determine from item type)
+        role = MessageRole.user if isinstance(item, UserMessageItem) else MessageRole.assistant
+
+        # Create message with deterministic UUID
         message = Message(
-            id=UUID(item.id),
+            id=self._string_to_uuid(item.id),  # ✅ Use helper method
             conversation_id=conversation_uuid,
             user_id=user_id,
             role=role,
