@@ -15,7 +15,8 @@ import { ChatKit, useChatKit } from "@openai/chatkit-react";
 import { getChatKitOptions } from "@/lib/chatkit-config";
 
 export function ChatKitPanel() {
-  // Complete ChatKit config with theme from ChatKit Studio
+  // ✅ User context automatically extracted from JWT token on backend
+  // Note: JWT token automatically sent via cookies by /api/chatkit route
   const { control } = useChatKit(getChatKitOptions());
 
   // CORRECT: Pass control prop to ChatKit component

@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from contextlib import asynccontextmanager
@@ -70,15 +70,23 @@ async def chatkit_endpoint(
     if not api_key:
         return {"error": "GEMINI_API_KEY not configured"}
 
-    # Extract user_id from request headers (Better Auth JWT)
-    # For development, use logged-in user's ID
-    authorization = request.headers.get("Authorization", "")
-    user_id = "XbN8PEmNydysjO4eQyFSV9bKNL6faSVe"  # Your actual user ID (tahanadeem2990@gmail.com)
+    # ✅ CRITICAL: Extract user_id from ChatKit request context
+    # The Next.js API route injects user_id from Better Auth session into context field
+    payload_bytes = await request.body()
+    payload_str = payload_bytes.decode('utf-8')
+    import json
+    payload_dict = json.loads(payload_str)
 
-    # TODO: Extract user_id from JWT token for production
-    # if authorization.startswith("Bearer "):
-    #     token = authorization[7:]
-    #     user_id = extract_user_from_jwt(token)
+    # Get user_id from context field (injected by Next.js API route)
+    user_id = payload_dict.get("context")
+
+    if user_id:
+        logger.info(f"✅ User context from request: {user_id}")
+    else:
+        # DEVELOPMENT FALLBACK
+        logger.warning(f"⚠️ No context in request, using fallback user")
+        user_id = "XbN8PEmNydysjO4eQyFSV9bKNL6faSVe"
+        logger.info(f"🔧 DEV MODE: Using fallback user_id: {user_id}")
 
     # Create database-backed store
     store = DatabaseChatKitStore(session)
@@ -87,8 +95,7 @@ async def chatkit_endpoint(
     chat_server = TodoChatKitServerWithMCP(store, api_key)
 
     # Handle ChatKit request with user context
-    payload = await request.body()  # Get raw bytes for ChatKitServer
-    result = await chat_server.process(payload, context=user_id)  # ✅ Pass user_id as context
+    result = await chat_server.process(payload_bytes, context=user_id)  # ✅ Pass user_id as context
 
     # Check if result is non-streaming (e.g., threads.list, threads.create)
     if isinstance(result, NonStreamingResult):

@@ -23,7 +23,8 @@ export function FloatingChatbot() {
     setIsMounted(true);
   }, []);
 
-  // Complete ChatKit config with theme from ChatKit Studio
+  // ✅ User context automatically extracted from JWT token on backend
+  // Note: JWT token automatically sent via cookies by /api/chatkit route
   const { control } = useChatKit(getChatKitOptions());
 
   // Don't render until mounted in browser
@@ -77,15 +78,15 @@ export function FloatingChatbot() {
       </div>
 
       {/* ChatKit Content */}
-      {!isMinimized && (
-        <div className="h-[calc(600px-64px)] overflow-hidden">
-          <ChatKit
-            control={control}
-            className="h-full w-full"
-            style={{ height: '100%', width: '100%', display: 'block' }}
-          />
-        </div>
-      )}
+      <div
+        className={`h-[calc(600px-64px)] overflow-hidden ${isMinimized ? 'hidden' : ''}`}
+      >
+        <ChatKit
+          control={control}
+          className="h-full w-full"
+          style={{ height: '100%', width: '100%', display: 'block' }}
+        />
+      </div>
     </div>
   );
 }

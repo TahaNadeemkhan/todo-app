@@ -357,21 +357,194 @@ Replace `MemoryStore` with database storage:
 
 6. **Rate Limiting**: Add rate limiting middleware to prevent API abuse.
 
+## Common Pitfalls and Solutions
+
+### Critical Issue 1: Thread vs ThreadMetadata Type Confusion
+**Error:** `TypeError: got multiple values for keyword argument 'items'`
+
+**Problem:** ChatKit has TWO separate types that are easily confused:
+- `Thread`: Full object WITH items array (for list views like `load_threads()`)
+- `ThreadMetadata`: Lightweight WITHOUT items (for single thread in `load_thread()`)
+
+**Solution:**
+```python
+# ✅ CORRECT - load_thread() returns ThreadMetadata (no items)
+async def load_thread(self, thread_id: str, context: str) -> ThreadMetadata | None:
+    conversation = await self.get_conversation(thread_id)
+    return ThreadMetadata(
+        id=str(conversation.id),
+        title="Thread Title",
+        created_at=int(conversation.created_at.timestamp()),
+        updated_at=int(conversation.updated_at.timestamp()),
+    )  # No items field - ChatKit loads separately
+
+# ✅ CORRECT - load_threads() returns Thread with empty items
+async def load_threads(...) -> Page[Thread]:
+    return Thread(
+        id=str(conv.id),
+        title="Thread Title",
+        created_at=...,
+        updated_at=...,
+        items=Page(data=[], has_more=False, after=None)  # Empty items
+    )
+```
+
+### Critical Issue 2: Content Type Not Recognized
+**Error:** Assistant messages not saving even with `add_thread_item()` call
+
+**Problem:** ChatKit uses different content types:
+- User messages: `'input_text'`
+- Assistant messages: `'output_text'` (NOT `'text'`)
+
+**Solution:**
+```python
+async def add_thread_item(self, thread_id, item, context):
+    content_text = ""
+    for content_part in item.content:
+        # ✅ Accept all three types
+        if hasattr(content_part, 'type') and content_part.type in ("text", "input_text", "output_text"):
+            content_text = getattr(content_part, 'text', "")
+            break
+
+    if not content_text.strip():
+        raise ValueError("Cannot save message with empty content")
+
+    # Save to database...
+```
+
+### Critical Issue 3: Assistant Messages Not Persisting
+**Error:** User messages save but assistant responses disappear after refresh
+
+**Problem:** Missing `store.add_thread_item()` call after streaming completes
+
+**Solution:**
+```python
+async def respond(self, thread, input_user_message, context):
+    # ... streaming logic ...
+
+    full_response = ""
+    async for chunk in self.model.respond_stream(messages):
+        full_response += chunk
+        assistant_item.content = [AssistantMessageContent(type="output_text", text=full_response)]
+        yield ThreadItemAddedEvent(item=assistant_item)
+
+    # ✅ CRITICAL: Save to database after streaming
+    await self.store.add_thread_item(thread_id, assistant_item, user_id)
+```
+
+### Critical Issue 4: NonStreamingResult Serialization Failing
+**Error:** `Cannot destructure property 'title'` in frontend
+
+**Problem:** Trying to use `dataclasses.asdict()` on Pydantic models with nested bytes
+
+**Solution:**
+```python
+# In main.py
+if isinstance(result, NonStreamingResult):
+    # ✅ CORRECT - Decode pre-serialized JSON bytes
+    import json
+    json_bytes = result.json
+    json_str = json_bytes.decode('utf-8')
+    result_dict = json.loads(json_str)
+    return JSONResponse(content=result_dict)
+```
+
+### Critical Issue 5: Database Tables Missing
+**Error:** `relation "conversations" does not exist`
+
+**Problem:** Alembic migrations not run or models not importable
+
+**Solution:**
+1. Ensure `.env.local` exists in backend with `DATABASE_URL`
+2. Fix `alembic/env.py` to import models:
+```python
+# alembic/env.py
+import sys
+from pathlib import Path
+
+# Add src directory to Python path
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
+```
+3. Run migrations: `alembic upgrade head`
+
+### Critical Issue 6: WSL-Windows Network Problems
+**Error:** Frontend can't reach backend at `localhost:8000`
+
+**Problem:** WSL's localhost is different from Windows host
+
+**Solution:**
+```bash
+# In frontend/.env.local
+# ❌ WRONG (WSL to Windows)
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+
+# ✅ CORRECT (WSL to Windows)
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000
+```
+
+Always use `127.0.0.1` for cross-environment communication.
+
+### Critical Issue 7: Missing Next.js API Proxy
+**Error:** ChatKit UI loads but doesn't communicate with backend
+
+**Problem:** No proxy route in Next.js (different from Vite)
+
+**Solution:**
+Create `/app/api/chatkit/route.ts`:
+```typescript
+import { NextRequest } from "next/server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+export async function POST(request: NextRequest) {
+  const body = await request.text();
+  const response = await fetch(`${BACKEND_URL}/chatkit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body,
+  });
+
+  const contentType = response.headers.get("content-type");
+
+  if (contentType?.includes("text/event-stream")) {
+    // Streaming response
+    return new Response(response.body, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+      },
+    });
+  }
+
+  // JSON response
+  const data = await response.json();
+  return Response.json(data);
+}
+```
+
 ## Troubleshooting
 
 ### Backend Issues
 - **Import errors**: Ensure `openai-chatkit` is installed with correct version
 - **API key errors**: Check `.env.local` is loaded and API key is valid
 - **CORS errors**: Verify CORS middleware configuration
+- **Database errors**: Run `alembic upgrade head` and check DATABASE_URL
 
 ### Frontend Issues
 - **ChatKit component not rendering**: Check API URL and domain key configuration
-- **Proxy not working**: Verify Vite proxy configuration and backend is running
+- **Proxy not working**: Verify Vite/Next.js proxy configuration and backend is running
 - **Style conflicts**: Use scoped CSS or adjust ChatKit theme to match your app
+- **Blank screen**: Check browser console for errors, verify API route exists
 
 ### Streaming Issues
 - **Responses not streaming**: Ensure `StreamingResponse` with `text/event-stream` media type
 - **Connection timeouts**: Check server keepalive settings
+
+### Data Persistence Issues
+- **History not loading**: Verify Thread vs ThreadMetadata types
+- **Messages disappearing**: Check `add_thread_item()` is called after streaming
+- **Empty conversation list**: Verify database has data and migrations ran
 
 ## Production Checklist
 

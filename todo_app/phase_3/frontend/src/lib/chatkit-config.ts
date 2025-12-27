@@ -1,6 +1,8 @@
 /**
  * ChatKit Configuration
  * Theme and settings from ChatKit Studio Playground
+ *
+ * ✅ Authentication: Next.js API route automatically adds JWT token from cookies
  */
 
 import type { ChatKitOptions } from "@openai/chatkit-react";
@@ -17,6 +19,8 @@ export const getChatKitOptions = (): ChatKitOptions => ({
   api: {
     url: CHATKIT_API_URL,
     domainKey: CHATKIT_API_DOMAIN_KEY,
+    // Note: Authorization header automatically added by /api/chatkit route from cookies
+    // User context extracted from JWT token on backend
   },
   theme: {
     colorScheme: 'dark',
