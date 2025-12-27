@@ -10,7 +10,7 @@ import hashlib
 import logging
 
 from chatkit.store import Store
-from chatkit.types import Thread, ThreadItem, ThreadMetadata, Page, UserMessageItem, AssistantMessageItem
+from chatkit.types import Thread, ThreadItem, ThreadMetadata, Page, UserMessageItem, AssistantMessageItem, AssistantMessageContent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -49,14 +49,43 @@ class DatabaseChatKitStore(Store[str]):
             hash_bytes = hashlib.md5(string_id.encode()).digest()
             return UUID(bytes=hash_bytes)
 
-    def _conversation_to_thread(self, conversation: Conversation) -> Thread:
-        """Convert Conversation model to ChatKit Thread."""
-        return Thread(
+    async def _conversation_to_thread(self, conversation: Conversation, include_items: bool = True) -> Thread | ThreadMetadata:
+        """Convert Conversation model to ChatKit Thread.
+
+        Args:
+            conversation: Database conversation object
+            include_items: If True, load the last message for preview. If False, return empty items.
+        """
+        # Determine title from first user message
+        title = "New Conversation"  # Default title
+
+        if include_items:
+            # Load the first user message for thread title
+            messages = await self.message_repo.get_history(
+                conversation_id=conversation.id,
+                limit=1
+            )
+            if messages:
+                # Use first 50 chars of first message as title
+                title = messages[0].content[:50] + ("..." if len(messages[0].content) > 50 else "")
+                logger.info(f"📝 Loaded title for thread {conversation.id}: '{title}'")
+
+        # Create Thread with empty items (ChatKit will load items via load_thread_items when needed)
+        # IMPORTANT: Use integer timestamps for JSON serialization
+        thread = Thread(
             id=str(conversation.id),
+            title=title,
             created_at=int(conversation.created_at.timestamp()),
             updated_at=int(conversation.updated_at.timestamp()),
-            items=Page(data=[], has_more=False, after=None),  # ✅ Page object, not list
+            items=Page(data=[], has_more=False, after=None),  # Empty items - will be loaded separately
         )
+
+        # Debug: Log the thread object serialization
+        logger.info(f"🔍 Created Thread: id={thread.id}, title={thread.title}")
+        thread_dict = thread.model_dump() if hasattr(thread, 'model_dump') else {}
+        logger.info(f"🔍 Thread serialized: {thread_dict}")
+
+        return thread
 
     def _message_to_thread_item(self, message: Message) -> ThreadItem:
         """Convert Message model to ChatKit ThreadItem.
@@ -74,7 +103,7 @@ class DatabaseChatKitStore(Store[str]):
             return UserMessageItem(
                 id=str(message.id),
                 thread_id=str(message.conversation_id),
-                created_at=message.created_at,
+                created_at=int(message.created_at.timestamp()),
                 type="user_message",
                 content=[UserMessageTextContent(type="input_text", text=message.content)],
                 attachments=[],
@@ -82,13 +111,13 @@ class DatabaseChatKitStore(Store[str]):
                 inference_options={"tool_choice": None, "model": None},
             )
         else:
-            # Assistant message - provide all required fields
+            # Assistant message - use proper AssistantMessageContent type
             return AssistantMessageItem(
                 id=str(message.id),
                 thread_id=str(message.conversation_id),
-                created_at=message.created_at,
+                created_at=int(message.created_at.timestamp()),
                 type="assistant_message",
-                content=[{"type": "text", "text": message.content}],
+                content=[AssistantMessageContent(type="output_text", text=message.content)],
                 attachments=[],
             )
 
@@ -101,15 +130,18 @@ class DatabaseChatKitStore(Store[str]):
         if not conversation or conversation.user_id != user_id:
             return None
 
-        return self._conversation_to_thread(conversation)
+        return await self._conversation_to_thread(conversation)
 
     async def save_thread(self, thread: ThreadMetadata, context: str) -> None:
         """Save a thread (create new conversation)."""
         user_id = context
+        logger.info(f"💾 save_thread called: thread_id={thread.id}, user_id={user_id}")
+
         # Check if thread already exists
         existing = await self.load_thread(thread.id, user_id)
         if existing:
             # Thread already exists, no need to create
+            logger.info(f"✅ Thread {thread.id} already exists, skipping")
             return
 
         # Create new conversation with deterministic UUID from thread ID
@@ -119,6 +151,7 @@ class DatabaseChatKitStore(Store[str]):
         )
         self.session.add(conversation)
         await self.session.commit()
+        logger.info(f"✅ Created new conversation: {conversation.id} for thread {thread.id}")
 
     async def load_threads(
         self,
@@ -143,13 +176,21 @@ class DatabaseChatKitStore(Store[str]):
             except ValueError:
                 offset = 0
 
+        logger.info(f"📋 load_threads called: user_id={user_id}, limit={limit}, offset={offset}, order={order}")
+
         conversations = await self.conversation_repo.get_by_user(
             user_id=user_id,
             limit=limit,
             offset=offset
         )
 
-        threads = [self._conversation_to_thread(c) for c in conversations]
+        logger.info(f"📋 Found {len(conversations)} conversations in database")
+
+        # Convert conversations to threads (load only metadata, not items)
+        threads = []
+        for c in conversations:
+            thread = await self._conversation_to_thread(c, include_items=True)  # Get title from first message
+            threads.append(thread)
 
         # Apply ordering (repository returns newest first by default)
         if order == "asc":
@@ -159,6 +200,7 @@ class DatabaseChatKitStore(Store[str]):
         has_more = len(threads) == limit
         next_after = str(offset + len(threads)) if has_more else None
 
+        logger.info(f"📋 Returning {len(threads)} threads (has_more={has_more}, next_after={next_after})")
         return Page(data=threads, has_more=has_more, after=next_after)
 
     async def load_thread_items(

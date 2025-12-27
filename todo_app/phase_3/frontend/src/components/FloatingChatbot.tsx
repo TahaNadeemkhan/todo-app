@@ -11,14 +11,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle, X, Minimize2 } from "lucide-react";
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
-import {
-  CHATKIT_API_URL,
-  CHATKIT_API_DOMAIN_KEY,
-  CHATKIT_THEME,
-  CHATKIT_COMPOSER,
-  CHATKIT_START_SCREEN,
-} from "@/lib/chatkit-config";
-import { ChatKitDebug } from "./ChatKitDebug";
+import { getChatKitOptions } from "@/lib/chatkit-config";
 
 export function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,13 +23,8 @@ export function FloatingChatbot() {
     setIsMounted(true);
   }, []);
 
-  // MINIMAL VALID CONFIG - Just API settings
-  const { control } = useChatKit({
-    api: {
-      url: CHATKIT_API_URL,
-      domainKey: CHATKIT_API_DOMAIN_KEY,
-    },
-  });
+  // Complete ChatKit config with theme from ChatKit Studio
+  const { control } = useChatKit(getChatKitOptions());
 
   // Don't render until mounted in browser
   if (!isMounted) {

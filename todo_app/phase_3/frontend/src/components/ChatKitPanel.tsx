@@ -12,22 +12,11 @@
  */
 
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
-import {
-  CHATKIT_API_URL,
-  CHATKIT_API_DOMAIN_KEY,
-  CHATKIT_THEME,
-  CHATKIT_COMPOSER,
-  CHATKIT_START_SCREEN
-} from "@/lib/chatkit-config";
+import { getChatKitOptions } from "@/lib/chatkit-config";
 
 export function ChatKitPanel() {
-  // MINIMAL VALID CONFIG - Just API settings
-  const { control } = useChatKit({
-    api: {
-      url: CHATKIT_API_URL,
-      domainKey: CHATKIT_API_DOMAIN_KEY,
-    },
-  });
+  // Complete ChatKit config with theme from ChatKit Studio
+  const { control } = useChatKit(getChatKitOptions());
 
   // CORRECT: Pass control prop to ChatKit component
   return (

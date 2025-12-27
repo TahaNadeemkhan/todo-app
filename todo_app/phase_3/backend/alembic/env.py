@@ -4,9 +4,15 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlmodel import SQLModel
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
 from alembic import context
+
+# Add src directory to Python path for model imports
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
 
 # Import models to register them with SQLModel.metadata
 from models.conversation import Conversation

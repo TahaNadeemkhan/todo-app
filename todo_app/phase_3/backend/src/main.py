@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -6,6 +7,8 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 from chatkit.server import NonStreamingResult
+
+logger = logging.getLogger(__name__)
 
 from mcp_server.server import mcp_app
 from db import get_async_session
@@ -89,9 +92,16 @@ async def chatkit_endpoint(
 
     # Check if result is non-streaming (e.g., threads.list, threads.create)
     if isinstance(result, NonStreamingResult):
-        # NonStreamingResult is a dataclass, convert to dict manually
-        import dataclasses
-        result_dict = dataclasses.asdict(result) if dataclasses.is_dataclass(result) else {"result": str(result)}
+        # NonStreamingResult has a 'json' attribute with already-serialized JSON bytes
+        # Just decode and parse it
+        import json
+        json_bytes = result.json
+        json_str = json_bytes.decode('utf-8')
+        result_dict = json.loads(json_str)
+
+        # Debug: Log what's being sent to frontend
+        logger.info(f"📤 Sending response to frontend (first 500 chars): {str(result_dict)[:500]}")
+
         return JSONResponse(content=result_dict)
 
     # Return streaming response for chat messages
