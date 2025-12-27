@@ -203,6 +203,9 @@ Your goal is to help the user manage their tasks using the provided tools.
         # Final update - message is complete
         assistant_item.content = [AssistantMessageContent(type="output_text", text=full_response)]
 
+        # ✅ SAVE assistant message to database
+        await self.store.add_thread_item(thread_id, assistant_item, user_id)
+
 
 class TodoChatKitServerWithMCP(TodoChatKitServer):
     """Extended ChatKit server with MCP tools integration.
@@ -398,3 +401,6 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
 
         # Final update with complete message
         assistant_item.content = [AssistantMessageContent(type="output_text", text=final_response)]
+
+        # ✅ SAVE assistant message to database
+        await self.store.add_thread_item(thread_id, assistant_item, user_id)
