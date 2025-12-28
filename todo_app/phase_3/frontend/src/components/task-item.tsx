@@ -88,114 +88,82 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="group"
+        className="group h-full"
       >
-        <Card className={`mb-3 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ${
+        <Card className={`h-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative ${
           task.completed
             ? 'border-green-500/30 bg-green-50 dark:bg-green-950/20'
             : 'border-border bg-card'
         }`}>
-          <CardContent className="flex items-start p-5 gap-4">
-            {/* Custom Checkbox with better UX */}
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              whileHover={{ scale: 1.1 }}
-              onClick={() => handleToggleComplete(!task.completed)}
-              className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                task.completed
-                  ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/30'
-                  : 'border-muted-foreground/40 hover:border-primary hover:bg-primary/10'
-              }`}
-              title={task.completed ? "Mark as incomplete" : "Mark as complete"}
-            >
-              {task.completed ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                <Circle className="w-4 h-4 opacity-0 group-hover:opacity-30" />
-              )}
-            </motion.button>
+          <CardContent className="flex flex-col p-4 gap-3 h-full">
+            {/* Header with checkbox and title */}
+            <div className="flex items-start gap-3">
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                whileHover={{ scale: 1.1 }}
+                onClick={() => handleToggleComplete(!task.completed)}
+                className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
+                  task.completed
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-muted-foreground/40 hover:border-primary hover:bg-primary/10'
+                }`}
+                title={task.completed ? "Mark as incomplete" : "Mark as complete"}
+              >
+                {task.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
+              </motion.button>
 
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                {/* Completed Badge */}
-                {task.completed && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Completed</span>
-                  </motion.div>
-                )}
-                <h3 className={`font-semibold text-lg transition-all duration-300 flex-1 ${task.completed ? "line-through text-muted-foreground decoration-2" : "text-foreground"}`}>
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-medium text-base transition-all duration-300 line-clamp-2 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                   {task.title}
                 </h3>
-                
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <motion.div whileHover={{ rotate: 8, scale: 1.1 }}>
-                    <Button variant="ghost" size="icon" onClick={() => setIsEditOpen(true)} className="h-8 w-8 hover:bg-primary/10 hover:text-primary">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ rotate: -8, scale: 1.1, color: "#ef4444" }}>
-                    <Button variant="ghost" size="icon" onClick={() => setIsDeleteOpen(true)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                </div>
               </div>
-              
-              {task.description && (
-                <p className="text-sm text-foreground/70 dark:text-foreground/60 leading-relaxed">{task.description}</p>
+            </div>
+
+            {/* Description */}
+            {task.description && (
+              <p className="text-sm text-foreground/60 dark:text-foreground/50 line-clamp-2 leading-relaxed">
+                {task.description}
+              </p>
+            )}
+
+            {/* Spacer to push badges to bottom */}
+            <div className="flex-1" />
+
+            {/* Badges at bottom */}
+            <div className="flex flex-col gap-2 mt-auto">
+              {task.priority && (
+                <div className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md w-fit ${
+                  task.priority === 'high' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                  task.priority === 'medium' ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400' :
+                  'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                }`}>
+                  <Flag className="w-3 h-3" />
+                  <span className="capitalize">{task.priority}</span>
+                </div>
               )}
-              
-              <div className="flex items-center gap-3 mt-3 flex-wrap">
-                {task.priority && (
-                  <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                    task.priority === 'high' ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30' :
-                    task.priority === 'medium' ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30' :
-                    'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
-                  }`}>
-                    <Flag className="w-3 h-3" />
-                    <span className="capitalize">{task.priority}</span>
-                  </div>
-                )}
-                {task.due_date && (
-                  <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                    isDueSoon()
-                      ? 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-orange-500/30'
-                      : 'text-foreground/70 dark:text-foreground/60 bg-muted/50 border-border'
-                  }`}>
-                    <CalendarIcon className="w-3 h-3" />
-                    <span>
-                      Due: {new Date(task.due_date).toLocaleDateString()}
-                      {(() => {
-                        const date = new Date(task.due_date);
-                        const hours = date.getHours();
-                        const minutes = date.getMinutes();
-                        // Show time only if it's not midnight (00:00) in local timezone
-                        if (hours !== 0 || minutes !== 0) {
-                          return ` · ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                        }
-                        return '';
-                      })()}
-                    </span>
-                  </div>
-                )}
-                {isDueSoon() && (
-                  <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-500/30">
-                    <AlertCircle className="w-3 h-3" />
-                    <span className="font-medium">Due Soon!</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 text-xs text-foreground/50 dark:text-foreground/40 ml-auto bg-muted/30 px-2 py-1 rounded-full">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium">
-                    Created {new Date(task.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+
+              {task.due_date && (
+                <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md w-fit ${
+                  isDueSoon()
+                    ? 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400'
+                    : 'text-foreground/60 bg-muted/50'
+                }`}>
+                  <CalendarIcon className="w-3 h-3" />
+                  <span>
+                    {new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
-              </div>
+              )}
+            </div>
+
+            {/* Action buttons on hover */}
+            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <Button variant="ghost" size="icon" onClick={() => setIsEditOpen(true)} className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsDeleteOpen(true)} className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </CardContent>
         </Card>

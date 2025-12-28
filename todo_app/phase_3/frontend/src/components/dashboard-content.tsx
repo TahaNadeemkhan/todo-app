@@ -8,14 +8,16 @@ import { Task } from "@/lib/types";
 import { TaskList } from "@/components/task-list";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { SearchAndFilterBar } from "@/components/search-and-filter-bar";
+import { Header } from "@/components/header";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 interface DashboardContentProps {
   forcedFilter?: string;
+  pageTitle?: string;
 }
 
-export function DashboardContent({ forcedFilter }: DashboardContentProps) {
+export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentProps) {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,10 +36,14 @@ export function DashboardContent({ forcedFilter }: DashboardContentProps) {
     }
   }, [session?.user?.id]);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (showToast = false) => {
+    setIsLoading(true);
     try {
       const response = await apiClient.get<Task[]>(`/api/${session?.user?.id}/tasks`);
       setTasks(response.data);
+      if (showToast) {
+        toast.success("Tasks refreshed");
+      }
     } catch (error) {
       console.error("Failed to fetch tasks", error);
       toast.error("Failed to load tasks");
@@ -123,10 +129,14 @@ export function DashboardContent({ forcedFilter }: DashboardContentProps) {
     filter === 'today' ? 'Today' :
     filter === 'upcoming' ? 'Upcoming' :
     filter === 'completed' ? 'Completed' :
-    'All Tasks';
+    pageTitle || 'All Tasks';
+
+  const handleRefresh = () => fetchTasks(true);
 
   return (
     <div className="space-y-6">
+      <Header onRefresh={handleRefresh} title={title} />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{title}</h1>

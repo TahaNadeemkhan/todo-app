@@ -6,6 +6,7 @@ import apiClient from "@/lib/api";
 import { Notification } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Header } from "@/components/header";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -131,27 +132,17 @@ export function NotificationsContent() {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+    <div className="space-y-6">
+      <Header onRefresh={fetchNotifications} title="Notifications" />
+
+      <div className="max-w-4xl mx-auto">
+        {/* Notification Summary and Actions */}
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-muted-foreground text-sm">
             {unreadCount > 0
               ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
               : "All caught up!"}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchNotifications}
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
           {unreadCount > 0 && (
             <Button
               variant="outline"
@@ -164,7 +155,6 @@ export function NotificationsContent() {
             </Button>
           )}
         </div>
-      </div>
 
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6">
@@ -281,6 +271,7 @@ export function NotificationsContent() {
           </AnimatePresence>
         </div>
       )}
+      </div>
     </div>
   );
 }

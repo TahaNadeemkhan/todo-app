@@ -112,7 +112,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 {grouped.overdue.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {grouped.overdue.map((task) => (
                   <TaskItem
@@ -136,7 +136,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 {grouped.today.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {grouped.today.map((task) => (
                   <TaskItem
@@ -160,7 +160,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 {grouped.tomorrow.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {grouped.tomorrow.map((task) => (
                   <TaskItem
@@ -184,7 +184,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 {grouped.thisWeek.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {grouped.thisWeek.map((task) => (
                   <TaskItem
@@ -208,7 +208,7 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
                 {grouped.later.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {grouped.later.map((task) => (
                   <TaskItem
@@ -226,9 +226,9 @@ export function TaskList({ tasks, onTaskUpdated, onTaskDeleted, filter: filterPr
     );
   }
 
-  // Default list view for other tabs
+  // Default grid view for other tabs
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <AnimatePresence mode="popLayout">
         {tasks.map((task) => (
           <TaskItem
