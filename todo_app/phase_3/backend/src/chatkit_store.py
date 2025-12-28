@@ -281,30 +281,40 @@ class DatabaseChatKitStore(Store[str]):
         logger.info(f"=== add_thread_item DEBUG ===")
         logger.info(f"item type = {type(item)}")
         logger.info(f"item.__class__.__name__ = {item.__class__.__name__}")
-        logger.info(f"item.content type = {type(item.content)}")
-        logger.info(f"item.content length = {len(item.content) if hasattr(item.content, '__len__') else 'N/A'}")
-        logger.info(f"item.content = {item.content}")
-        logger.info(f"item dict = {item.model_dump() if hasattr(item, 'model_dump') else item.__dict__}")
 
-        content_text = ""
-        for idx, content_part in enumerate(item.content):
-            logger.info(f"content_part[{idx}] type = {type(content_part)}")
-            logger.info(f"content_part[{idx}] = {content_part}")
-            logger.info(f"content_part[{idx}] dict = {content_part.model_dump() if hasattr(content_part, 'model_dump') else content_part.__dict__ if hasattr(content_part, '__dict__') else 'no dict'}")
+        # WidgetItem doesn't have content attribute, it has widget
+        if item.__class__.__name__ == 'WidgetItem':
+            logger.info(f"✅ WidgetItem detected - skipping database save (will be yielded to frontend)")
+            logger.info(f"item dict = {item.model_dump() if hasattr(item, 'model_dump') else item.__dict__}")
+            logger.info(f"=== END DEBUG ===")
+            # Don't save widgets to database - they're ephemeral UI elements
+            # They'll still be yielded to the frontend and rendered
+            return
+        else:
+            logger.info(f"item.content type = {type(item.content)}")
+            logger.info(f"item.content length = {len(item.content) if hasattr(item.content, '__len__') else 'N/A'}")
+            logger.info(f"item.content = {item.content}")
+            logger.info(f"item dict = {item.model_dump() if hasattr(item, 'model_dump') else item.__dict__}")
 
-            # content_part is a Pydantic object with .type and .text attributes
-            # ChatKit sends:
-            # - 'input_text' for user messages
-            # - 'output_text' for assistant messages (NOT 'text'!)
-            if hasattr(content_part, 'type') and content_part.type in ("text", "input_text", "output_text"):
-                content_text = getattr(content_part, 'text', "")
-                logger.info(f"✅ Found text content (type={content_part.type}): '{content_text}'")
-                break
-            else:
-                logger.warning(f"⚠️ content_part type is {getattr(content_part, 'type', 'NONE')}, expected 'text', 'input_text', or 'output_text'")
+            content_text = ""
+            for idx, content_part in enumerate(item.content):
+                logger.info(f"content_part[{idx}] type = {type(content_part)}")
+                logger.info(f"content_part[{idx}] = {content_part}")
+                logger.info(f"content_part[{idx}] dict = {content_part.model_dump() if hasattr(content_part, 'model_dump') else content_part.__dict__ if hasattr(content_part, '__dict__') else 'no dict'}")
 
-        logger.info(f"Final content_text = '{content_text}'")
-        logger.info(f"=== END DEBUG ===")
+                # content_part is a Pydantic object with .type and .text attributes
+                # ChatKit sends:
+                # - 'input_text' for user messages
+                # - 'output_text' for assistant messages (NOT 'text'!)
+                if hasattr(content_part, 'type') and content_part.type in ("text", "input_text", "output_text"):
+                    content_text = getattr(content_part, 'text', "")
+                    logger.info(f"✅ Found text content (type={content_part.type}): '{content_text}'")
+                    break
+                else:
+                    logger.warning(f"⚠️ content_part type is {getattr(content_part, 'type', 'NONE')}, expected 'text', 'input_text', or 'output_text'")
+
+            logger.info(f"Final content_text = '{content_text}'")
+            logger.info(f"=== END DEBUG ===")
 
         # Validate content is not empty
         if not content_text or not content_text.strip():

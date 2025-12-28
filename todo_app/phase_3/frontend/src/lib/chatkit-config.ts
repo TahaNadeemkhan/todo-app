@@ -15,7 +15,8 @@ export const CHATKIT_API_DOMAIN_KEY =
   process.env.NEXT_PUBLIC_CHATKIT_API_DOMAIN_KEY || "domain_pk_localhost_dev";
 
 // Complete ChatKit configuration matching ChatKit Studio design
-export const getChatKitOptions = (): ChatKitOptions => ({
+// ✅ Created as a constant to prevent recreation on every render
+export const CHATKIT_OPTIONS: ChatKitOptions = {
   api: {
     url: CHATKIT_API_URL,
     domainKey: CHATKIT_API_DOMAIN_KEY,
@@ -89,4 +90,7 @@ export const getChatKitOptions = (): ChatKitOptions => ({
       }
     ],
   },
-});
+};
+
+// Keep backward compatibility
+export const getChatKitOptions = (): ChatKitOptions => CHATKIT_OPTIONS;

@@ -35,5 +35,8 @@ class Conversation(SQLModel, table=True):
         description="Last update timestamp"
     )
 
-    # Relationship to messages
-    messages: List["Message"] = Relationship(back_populates="conversation")
+    # Relationship to messages (cascade delete - when conversation is deleted, delete all messages)
+    messages: List["Message"] = Relationship(
+        back_populates="conversation",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )

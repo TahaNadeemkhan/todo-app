@@ -1,9 +1,9 @@
 /**
- * Task List Widget for ChatKit
- * Displays tasks in a beautiful card-based UI instead of raw JSON
+ * ChatKit Task List Widget
+ * Uses ChatKit Studio components for rendering inside ChatKit sandbox
  */
 
-import { Check, Circle, Clock, AlertCircle } from "lucide-react";
+import React from "react";
 
 export interface Task {
   id: string;
@@ -19,129 +19,115 @@ interface TaskListWidgetProps {
   title?: string;
 }
 
+/**
+ * TaskListWidget - Renders tasks using ChatKit Studio components
+ * Components available: Box, Row, Col, Text, Title, Caption, Checkbox, Badge, Icon, Divider
+ */
 export function TaskListWidget({ tasks, title = "Your Tasks" }: TaskListWidgetProps) {
+  // Import ChatKit components dynamically (they're injected by ChatKit runtime)
+  const Box = (globalThis as any).Box;
+  const Row = (globalThis as any).Row;
+  const Col = (globalThis as any).Col;
+  const Text = (globalThis as any).Text;
+  const Title = (globalThis as any).Title;
+  const Caption = (globalThis as any).Caption;
+  const Checkbox = (globalThis as any).Checkbox;
+  const Badge = (globalThis as any).Badge;
+  const Icon = (globalThis as any).Icon;
+  const Divider = (globalThis as any).Divider;
+
+  // Fallback for missing components
+  if (!Box || !Row || !Col) {
+    return (
+      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <p className="text-gray-600">ChatKit components not available</p>
+      </div>
+    );
+  }
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
-      case "high":
-        return "text-red-500 bg-red-50 dark:bg-red-900/20";
-      case "medium":
-        return "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20";
-      case "low":
-        return "text-blue-500 bg-blue-50 dark:bg-blue-900/20";
-      default:
-        return "text-gray-500 bg-gray-50 dark:bg-gray-900/20";
-    }
-  };
-
-  const getPriorityIcon = (priority?: string) => {
-    switch (priority) {
-      case "high":
-        return <AlertCircle className="h-4 w-4" />;
-      case "medium":
-        return <Clock className="h-4 w-4" />;
-      default:
-        return <Circle className="h-4 w-4" />;
+      case "high": return "error";
+      case "medium": return "warning";
+      case "low": return "success";
+      default: return "default";
     }
   };
 
   if (tasks.length === 0) {
     return (
-      <div className="p-6 text-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <Circle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-        <p className="text-gray-600 dark:text-gray-400">No tasks found</p>
-        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-          Add your first task to get started!
-        </p>
-      </div>
+      <Box padding={4} background="surface-secondary">
+        <Col gap={2}>
+          <Icon name="circle" size="lg" />
+          <Text value="No tasks found" size="md" />
+        </Col>
+      </Box>
     );
   }
 
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+  const completionPercent = Math.round((completedCount / totalCount) * 100);
+
   return (
-    <div className="space-y-3 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {tasks.filter(t => !t.completed).length} active
-        </span>
-      </div>
+    <Box padding={4} background="surface">
+      <Col gap={3}>
+        {/* Header with title and stats */}
+        <Row gap={2}>
+          <Title value={title} size="lg" />
+          <Badge label={`${completedCount}/${totalCount}`} color="primary" size="md" />
+        </Row>
 
-      <div className="space-y-2">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className={`group p-3 rounded-lg border transition-all ${
-              task.completed
-                ? "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60"
-                : "bg-white dark:bg-gray-850 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {/* Checkbox Icon */}
-              <div className="flex-shrink-0 mt-0.5">
-                {task.completed ? (
-                  <Check className="h-5 w-5 text-green-500" />
-                ) : (
-                  <Circle className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
-                )}
-              </div>
+        <Caption value={`${completionPercent}% completed`} size="sm" />
+        <Divider spacing={2} />
 
-              {/* Task Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4
-                    className={`font-medium ${
-                      task.completed
-                        ? "line-through text-gray-500 dark:text-gray-400"
-                        : "text-gray-900 dark:text-gray-100"
-                    }`}
-                  >
-                    {task.title}
-                  </h4>
-                  {task.priority && (
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(
-                        task.priority
-                      )}`}
-                    >
-                      {getPriorityIcon(task.priority)}
-                      {task.priority}
-                    </span>
+        {/* Task list */}
+        {tasks.map((task, index) => (
+          <React.Fragment key={task.id}>
+            <Box padding={3} background="surface-secondary">
+              <Col gap={2}>
+                {/* Title row with checkbox and priority */}
+                <Row gap={2}>
+                  {task.completed ? (
+                    <Icon name="check-circle-filled" size="md" />
+                  ) : (
+                    <Icon name="circle" size="md" />
                   )}
-                </div>
+                  <Text
+                    value={task.title}
+                    size="md"
+                  />
+                  {task.priority && (
+                    <Badge
+                      label={task.priority.toUpperCase()}
+                      color={getPriorityColor(task.priority)}
+                      size="sm"
+                    />
+                  )}
+                </Row>
 
+                {/* Description */}
                 {task.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {task.description}
-                  </p>
+                  <Caption value={task.description} size="sm" />
                 )}
 
+                {/* Due date */}
                 {task.due_date && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                    <Clock className="h-3 w-3" />
-                    <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                  </div>
+                  <Row gap={1}>
+                    <Icon name="calendar" size="sm" />
+                    <Caption
+                      value={`Due: ${new Date(task.due_date).toLocaleDateString()}`}
+                      size="sm"
+                    />
+                  </Row>
                 )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+              </Col>
+            </Box>
 
-      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">
-            {tasks.filter(t => t.completed).length} of {tasks.length} completed
-          </span>
-          <div className="h-2 w-32 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 transition-all"
-              style={{
-                width: `${(tasks.filter(t => t.completed).length / tasks.length) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+            {index < tasks.length - 1 && <Divider spacing={1} />}
+          </React.Fragment>
+        ))}
+      </Col>
+    </Box>
   );
 }

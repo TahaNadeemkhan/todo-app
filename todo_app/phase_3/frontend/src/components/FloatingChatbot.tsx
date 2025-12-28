@@ -8,27 +8,22 @@
  * Ensure this component is only rendered client-side.
  */
 
-import { useState, useEffect } from "react";
+import { useState, memo } from "react";
 import { MessageCircle, X, Minimize2 } from "lucide-react";
-import { ChatKit, useChatKit } from "@openai/chatkit-react";
-import { getChatKitOptions } from "@/lib/chatkit-config";
+import { ChatKit } from "@openai/chatkit-react";
+import { useChatbotContext } from "@/components/ChatbotProvider";
 
-export function FloatingChatbot() {
+function FloatingChatbotInner() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
-  // Ensure component only runs in browser
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
+  // ✅ Use global ChatKit instance from context (survives navigation)
   // ✅ User context automatically extracted from JWT token on backend
   // Note: JWT token automatically sent via cookies by /api/chatkit route
-  const { control } = useChatKit(getChatKitOptions());
+  const { control, isReady } = useChatbotContext();
 
-  // Don't render until mounted in browser
-  if (!isMounted) {
+  // Don't render until ChatKit is ready
+  if (!isReady) {
     return null;
   }
 
@@ -82,6 +77,7 @@ export function FloatingChatbot() {
         className={`h-[calc(600px-64px)] overflow-hidden ${isMinimized ? 'hidden' : ''}`}
       >
         <ChatKit
+          key="floating-chatbot-singleton"
           control={control}
           className="h-full w-full"
           style={{ height: '100%', width: '100%', display: 'block' }}
@@ -90,3 +86,7 @@ export function FloatingChatbot() {
     </div>
   );
 }
+
+// ✅ Memoize component to prevent unnecessary re-renders during navigation
+export const FloatingChatbot = memo(FloatingChatbotInner);
+FloatingChatbot.displayName = 'FloatingChatbot';

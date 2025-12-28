@@ -20,6 +20,7 @@ from chatkit.types import (
     UserMessageContent,
     AssistantMessageContent,
     Page,
+    WidgetItem,
 )
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from openai import AsyncOpenAI
@@ -218,6 +219,219 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
         super().__init__(store, api_key)
         self.mcp_tools = mcp_tools or []
 
+    async def action(
+        self,
+        thread: ThreadMetadata,
+        action_type: str,
+        payload: dict,
+        context: str,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Handle widget actions (e.g., checkbox toggles)."""
+        user_id = context
+        logger.info(f"🎬 Widget action received: type={action_type}, payload={payload}")
+
+        # Handle task toggle action (checkbox click)
+        if action_type == "task.toggle":
+            task_id = payload.get("id")
+            if task_id:
+                try:
+                    # First, get current task state
+                    logger.info(f"Toggling task {task_id}")
+                    tasks_result = await mcp.call_tool("list_tasks", {
+                        "status": "all",
+                        "user_id": user_id
+                    })
+
+                    # Find the current task to check its completed status
+                    current_completed = False
+                    if isinstance(tasks_result, list) and len(tasks_result) > 0:
+                        first_item = tasks_result[0]
+                        if hasattr(first_item, 'text'):
+                            task_data = json.loads(first_item.text)
+                            for task in task_data.get("tasks", []):
+                                if str(task.get("task_id")) == str(task_id):
+                                    current_completed = task.get("completed", False)
+                                    break
+
+                    # Toggle: if currently completed, mark as pending; if pending, mark as completed
+                    from repositories.task_repository import TaskRepository
+                    from db import get_async_session
+
+                    async for session in get_async_session():
+                        repo = TaskRepository(session)
+                        task = await repo.update(
+                            task_id=int(task_id),
+                            user_id=user_id,
+                            completed=not current_completed
+                        )
+                        logger.info(f"✅ Task {task_id} toggled: {current_completed} -> {not current_completed}")
+
+                    # Refresh the task list widget
+                    logger.info(f"Refreshing task list after toggle")
+                    tasks_result = await mcp.call_tool("list_tasks", {
+                        "status": "all",
+                        "user_id": user_id
+                    })
+
+                    # Parse and create new widget
+                    if isinstance(tasks_result, list) and len(tasks_result) > 0:
+                        first_item = tasks_result[0]
+                        if hasattr(first_item, 'text'):
+                            task_data = json.loads(first_item.text)
+                            if "tasks" in task_data:
+                                updated_widget = self._create_task_list_widget(task_data["tasks"])
+
+                                # Yield updated widget
+                                widget_id = f"widget_{uuid.uuid4().hex[:8]}"
+                                widget_item = WidgetItem(
+                                    id=widget_id,
+                                    thread_id=thread.id,
+                                    created_at=datetime.now(timezone.utc),
+                                    type="widget",
+                                    widget=updated_widget
+                                )
+                                yield ThreadItemAddedEvent(item=widget_item)
+                                logger.info(f"✅ Refreshed widget after task toggle")
+
+                except Exception as e:
+                    logger.error(f"❌ Failed to toggle task: {e}")
+        else:
+            logger.warning(f"⚠️ Unknown action type: {action_type}")
+
+        # Must be a generator - even if no events to yield
+        return
+        yield  # Make this an async generator
+
+    def _create_task_list_widget(self, tasks: list) -> dict:
+        """Convert task list to ChatKit widget JSON format.
+
+        Uses the widget structure from ChatKit Studio Widget Builder.
+        """
+        if not tasks:
+            return {
+                "type": "Card",
+                "size": "md",
+                "status": {"text": "No tasks found"},
+                "children": []
+            }
+
+        # Map priority to badge color
+        priority_color_map = {
+            "high": "danger",
+            "medium": "warning",
+            "low": "success"
+        }
+
+        list_view_items = []
+        for task in tasks:
+            task_id = task.get("task_id", "")
+            title = task.get("title", "Untitled")
+            description = task.get("description", "")
+            completed = task.get("completed", False)
+            priority = task.get("priority", "").lower()
+            due_date = task.get("due_date")
+
+            # Build children for each task item
+            item_children = [
+                {
+                    "type": "Checkbox",
+                    "name": f"tasks.{task_id}.done",
+                    "defaultChecked": completed,
+                    "onChangeAction": {
+                        "type": "task.toggle",
+                        "payload": {"id": task_id}
+                    }
+                },
+                {
+                    "type": "Col",
+                    "flex": "auto",
+                    "gap": 1,
+                    "children": [
+                        {
+                            "type": "Text",
+                            "value": title,
+                            "weight": "bold",
+                            "maxLines": 1
+                        }
+                    ]
+                }
+            ]
+
+            # Add description if present
+            if description:
+                item_children[1]["children"].append({
+                    "type": "Text",
+                    "value": description,
+                    "size": "sm",
+                    "color": "secondary",
+                    "maxLines": 2
+                })
+
+            # Add due date if present
+            if due_date:
+                try:
+                    # Format date nicely
+                    from datetime import datetime
+                    date_obj = datetime.fromisoformat(str(due_date).replace('Z', '+00:00'))
+                    formatted_date = date_obj.strftime("Due %b %d")
+                except:
+                    formatted_date = f"Due {due_date}"
+
+                item_children[1]["children"].append({
+                    "type": "Row",
+                    "gap": 1,
+                    "children": [
+                        {
+                            "type": "Icon",
+                            "name": "calendar",
+                            "size": "sm",
+                            "color": "secondary"
+                        },
+                        {
+                            "type": "Caption",
+                            "value": formatted_date,
+                            "color": "secondary"
+                        }
+                    ]
+                })
+
+            # Add spacer
+            item_children.append({"type": "Spacer"})
+
+            # Add priority badge if present
+            if priority and priority in priority_color_map:
+                item_children.append({
+                    "type": "Badge",
+                    "label": priority.capitalize(),
+                    "color": priority_color_map[priority]
+                })
+
+            # Create list view item
+            list_view_items.append({
+                "type": "ListViewItem",
+                "key": task_id,
+                "gap": 3,
+                "children": item_children
+            })
+
+        # Build complete widget
+        completed_count = sum(1 for t in tasks if t.get("completed", False))
+        total_count = len(tasks)
+
+        return {
+            "type": "Card",
+            "size": "md",
+            "status": {
+                "text": f"{completed_count}/{total_count} tasks completed"
+            },
+            "children": [
+                {
+                    "type": "ListView",
+                    "children": list_view_items
+                }
+            ]
+        }
+
     def _get_openai_tools(self) -> List[ChatCompletionToolParam]:
         """Convert MCP tools to OpenAI function calling schema.
 
@@ -327,20 +541,43 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
 
         # Get MCP tools
         tools = self._get_openai_tools()
+        logger.info(f"🔧 Available MCP tools: {len(tools)}")
+        for tool in tools:
+            logger.info(f"  - {tool['function']['name']}: {tool['function']['description']}")
 
         # Tool calling loop (max 5 iterations to prevent infinite loops)
         final_response = ""
+        task_list_widget = None  # Will store widget if list_tasks is called
+
         for iteration in range(5):
             try:
+                logger.info(f"🔄 Tool calling iteration {iteration + 1}")
+
+                # Force tool usage on first iteration, then allow text responses
+                # This ensures AI calls tools initially but can respond with text after tool results
+                tool_choice_param = None
+                if tools:
+                    tool_choice_param = "required" if iteration == 0 else "auto"
+
                 response = await self.client.chat.completions.create(
                     model="gemini-2.5-flash",  # Gemini 2.5 supports tool calling
                     messages=chat_messages,
                     tools=tools if tools else None,
-                    tool_choice="auto" if tools else None
+                    tool_choice=tool_choice_param
                 )
+
+                logger.info(f"📥 Response finish_reason: {response.choices[0].finish_reason}")
 
                 response_message = response.choices[0].message
                 chat_messages.append(response_message)
+
+                # Log tool calls status
+                if response_message.tool_calls:
+                    logger.info(f"🛠️ Tool calls detected: {len(response_message.tool_calls)}")
+                else:
+                    logger.info(f"💬 No tool calls - direct text response")
+                    if response_message.content:
+                        logger.info(f"   Response: {response_message.content[:100]}...")
 
                 if response_message.tool_calls:
                     # Execute tool calls
@@ -357,6 +594,33 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
                             # Execute MCP tool
                             result = await mcp.call_tool(function_name, arguments)
                             result_str = json.dumps(result, default=str)
+
+                            # ✅ Capture list_tasks results for widget rendering
+                            if function_name == "list_tasks":
+                                logger.info(f"🔍 list_tasks result type: {type(result)}")
+
+                                # Parse MCP result - it returns [TextContent(...)] format
+                                task_data = None
+                                if isinstance(result, list) and len(result) > 0:
+                                    # Extract text from TextContent
+                                    first_item = result[0]
+                                    if hasattr(first_item, 'text'):
+                                        json_str = first_item.text
+                                        try:
+                                            task_data = json.loads(json_str)
+                                            logger.info(f"📋 Parsed task data: {len(task_data.get('tasks', []))} tasks")
+                                        except json.JSONDecodeError as e:
+                                            logger.error(f"Failed to parse JSON: {e}")
+                                elif isinstance(result, dict):
+                                    # Direct dict format (fallback)
+                                    task_data = result
+
+                                # Create widget if we have tasks
+                                if task_data and "tasks" in task_data:
+                                    logger.info(f"📋 Creating widget for {len(task_data['tasks'])} tasks")
+                                    task_list_widget = self._create_task_list_widget(task_data["tasks"])
+                                else:
+                                    logger.warning(f"No tasks found in result")
                         except Exception as e:
                             logger.error(f"MCP tool execution failed: {e}")
                             result_str = json.dumps({"error": str(e)})
@@ -404,3 +668,19 @@ class TodoChatKitServerWithMCP(TodoChatKitServer):
 
         # ✅ SAVE assistant message to database
         await self.store.add_thread_item(thread_id, assistant_item, user_id)
+
+        # ✅ If we have a task list widget, yield it as a separate message
+        if task_list_widget:
+            logger.info(f"📦 Yielding task list widget to client")
+            widget_id = f"widget_{uuid.uuid4().hex[:8]}"
+            widget_item = WidgetItem(
+                id=widget_id,
+                thread_id=thread_id,
+                created_at=datetime.now(timezone.utc),
+                type="widget",
+                widget=task_list_widget
+            )
+            yield ThreadItemAddedEvent(item=widget_item)
+
+            # Note: Widgets are ephemeral UI elements - not saved to database
+            # They're generated on-the-fly from MCP tool results
