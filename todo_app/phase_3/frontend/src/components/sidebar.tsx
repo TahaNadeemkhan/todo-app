@@ -16,12 +16,15 @@ import {
   User,
   Sun,
   Bell,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const { isOpen } = useSidebar();
+  const { isOpen, toggle } = useSidebar();
 
   const links = [
     { href: "/dashboard", label: "All Tasks", icon: LayoutDashboard },
@@ -47,7 +50,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 relative">
         {links.map((link) => {
           const isActive = pathname === link.href;
           return (
@@ -68,6 +71,17 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Floating Toggle Button (always centered, changes icon based on state) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-background border border-border shadow-sm hover:bg-muted"
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isOpen ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        </Button>
       </nav>
 
       {/* Bottom Section: Settings, User, Theme */}

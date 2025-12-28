@@ -9,6 +9,8 @@ import { TaskList } from "@/components/task-list";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { SearchAndFilterBar } from "@/components/search-and-filter-bar";
 import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -21,6 +23,7 @@ export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentPr
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const searchParams = useSearchParams();
 
   // Search and filter state
@@ -37,7 +40,11 @@ export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentPr
   }, [session?.user?.id]);
 
   const fetchTasks = async (showToast = false) => {
-    setIsLoading(true);
+    if (showToast) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     try {
       const response = await apiClient.get<Task[]>(`/api/${session?.user?.id}/tasks`);
       setTasks(response.data);
@@ -49,6 +56,7 @@ export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentPr
       toast.error("Failed to load tasks");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -135,7 +143,7 @@ export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentPr
 
   return (
     <div className="space-y-6">
-      <Header onRefresh={handleRefresh} title={title} />
+      <Header />
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2">
         <div>
@@ -144,7 +152,19 @@ export function DashboardContent({ forcedFilter, pageTitle }: DashboardContentPr
             {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
           </p>
         </div>
-        <AddTaskDialog onTaskAdded={handleTaskAdded} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="hover:bg-muted"
+            aria-label="Refresh tasks"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <AddTaskDialog onTaskAdded={handleTaskAdded} />
+        </div>
       </div>
 
       {/* Search and Filter Bar */}

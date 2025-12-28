@@ -135,11 +135,11 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
                 id="priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="flex h-9 w-full items-center justify-between rounded-md border border-white/20 bg-white/50 px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex h-9 w-full items-center justify-between rounded-md border border-white/20 bg-white/50 dark:bg-zinc-800 dark:text-white px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <option value="low" className="bg-white dark:bg-zinc-800">Low</option>
+                <option value="medium" className="bg-white dark:bg-zinc-800">Medium</option>
+                <option value="high" className="bg-white dark:bg-zinc-800">High</option>
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
