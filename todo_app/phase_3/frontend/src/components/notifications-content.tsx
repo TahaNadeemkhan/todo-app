@@ -25,12 +25,17 @@ export function NotificationsContent() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (showToast = false) => {
     if (!session?.user?.id) return;
 
-    setIsLoading(true);
+    if (showToast) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     try {
       const params = filter === "unread" ? { unread_only: true } : {};
       const response = await apiClient.get<Notification[]>(
@@ -38,11 +43,15 @@ export function NotificationsContent() {
         { params }
       );
       setNotifications(response.data);
+      if (showToast) {
+        toast.success("Notifications refreshed");
+      }
     } catch (error) {
       console.error("Failed to fetch notifications", error);
       toast.error("Failed to load notifications");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -133,27 +142,42 @@ export function NotificationsContent() {
 
   return (
     <div className="space-y-6">
-      <Header onRefresh={fetchNotifications} title="Notifications" />
+      <Header />
 
       <div className="max-w-4xl mx-auto">
-        {/* Notification Summary and Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-muted-foreground text-sm">
-            {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
-              : "All caught up!"}
-          </p>
-          {unreadCount > 0 && (
+        {/* Page Title and Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {unreadCount > 0
+                ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
+                : "All caught up!"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              onClick={markAllAsRead}
-              className="gap-2"
+              size="icon"
+              onClick={() => fetchNotifications(true)}
+              disabled={isRefreshing}
+              className="hover:bg-muted"
+              aria-label="Refresh notifications"
             >
-              <CheckCheck className="h-4 w-4" />
-              Mark all read
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
-          )}
+            {unreadCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAllAsRead}
+                className="gap-2"
+              >
+                <CheckCheck className="h-4 w-4" />
+                Mark all read
+              </Button>
+            )}
+          </div>
         </div>
 
       {/* Filter Tabs */}
