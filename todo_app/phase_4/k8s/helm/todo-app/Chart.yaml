@@ -1,0 +1,15 @@
+apiVersion: v2
+name: todo-app
+description: AI-Powered Todo Application with Chatbot - Production Helm Chart
+type: application
+version: 1.0.0
+appVersion: "v1.0.0"
+keywords:
+  - todo
+  - ai
+  - chatbot
+  - nextjs
+  - fastapi
+maintainers:
+  - name: Todo App Team
+    email: team@todo-app.example.com

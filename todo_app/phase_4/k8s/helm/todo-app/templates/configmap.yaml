@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-app.configMapName" . }}
+  labels:
+    {{- include "todo-app.labels" . | nindent 4 }}
+data:
+  # Application metadata
+  APP_NAME: {{ .Values.configMap.appName | quote }}
+
+  # Feature flags
+  CHATBOT_ENABLED: {{ .Values.configMap.features.chatbotEnabled | quote }}
+  DARK_MODE_ENABLED: {{ .Values.configMap.features.darkModeEnabled | quote }}
+
+  # Environment indicator
+  ENVIRONMENT: {{ .Values.global.environment | quote }}

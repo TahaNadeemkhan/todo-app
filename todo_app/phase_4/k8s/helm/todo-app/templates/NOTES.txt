@@ -1,0 +1,143 @@
+================================================================================
+  Todo App - AI-Powered Todo Application with Chatbot
+================================================================================
+
+Your release "{{ .Release.Name }}" has been deployed!
+
+Chart Version: {{ .Chart.Version }}
+App Version:   {{ .Chart.AppVersion }}
+Namespace:     {{ .Release.Namespace }}
+
+================================================================================
+  DEPLOYMENT STATUS
+================================================================================
+
+To check the status of your deployment:
+
+  kubectl get pods -n {{ .Release.Namespace }}
+  kubectl get services -n {{ .Release.Namespace }}
+
+To watch the pods come up:
+
+  kubectl get pods -n {{ .Release.Namespace }} -w
+
+================================================================================
+  ACCESSING THE APPLICATION
+================================================================================
+
+{{ if eq .Values.frontend.service.type "NodePort" }}
+The frontend is exposed via NodePort.
+
+1. Get the application URL:
+
+   {{- if contains "minikube" (.Values.global.environment | lower) }}
+
+   minikube service {{ include "todo-app.frontend.serviceName" . }} --url
+
+   {{- else }}
+
+   export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
+   export NODE_PORT={{ .Values.frontend.service.nodePort }}
+   echo "http://$NODE_IP:$NODE_PORT"
+
+   {{- end }}
+
+2. Open the URL in your browser
+
+{{ else if eq .Values.frontend.service.type "LoadBalancer" }}
+The frontend is exposed via LoadBalancer.
+
+1. Get the application URL:
+
+   export SERVICE_IP=$(kubectl get svc {{ include "todo-app.frontend.serviceName" . }} -n {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+   echo "http://$SERVICE_IP:{{ .Values.frontend.service.port }}"
+
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+
+{{ end }}
+
+================================================================================
+  HEALTH CHECKS
+================================================================================
+
+Frontend Health:
+  kubectl exec -it deployment/{{ include "todo-app.fullname" . }}-frontend -n {{ .Release.Namespace }} -- curl localhost:3000/api/health
+
+Backend Health:
+  kubectl exec -it deployment/{{ include "todo-app.fullname" . }}-backend -n {{ .Release.Namespace }} -- curl localhost:8000/health
+
+================================================================================
+  LOGS
+================================================================================
+
+View frontend logs:
+  kubectl logs -f deployment/{{ include "todo-app.fullname" . }}-frontend -n {{ .Release.Namespace }}
+
+View backend logs:
+  kubectl logs -f deployment/{{ include "todo-app.fullname" . }}-backend -n {{ .Release.Namespace }}
+
+================================================================================
+  CONFIGURATION
+================================================================================
+
+Resources Deployed:
+  - Frontend Replicas:  {{ .Values.frontend.replicaCount }}
+  - Backend Replicas:   {{ .Values.backend.replicaCount }}
+  - Frontend Service:   {{ .Values.frontend.service.type }}
+  - Backend Service:    {{ .Values.backend.service.type }}
+
+Secrets Configured:
+  - Database URL:       ✓ (from secrets.databaseUrl)
+  - Gemini API Key:     ✓ (from secrets.geminiApiKey)
+  - Better Auth Secret: ✓ (from secrets.betterAuthSecret)
+  - Better Auth URL:    ✓ (from secrets.betterAuthUrl)
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+If pods are not starting:
+
+1. Check pod status:
+   kubectl describe pod -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+2. View pod events:
+   kubectl get events -n {{ .Release.Namespace }} --sort-by='.lastTimestamp'
+
+3. Check logs:
+   kubectl logs -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Common issues:
+  - ImagePullBackOff: Images not loaded in Minikube
+    Solution: minikube image load <image>:<tag>
+
+  - CrashLoopBackOff: Application errors or missing env vars
+    Solution: Check logs for error messages
+
+================================================================================
+  UPGRADE & ROLLBACK
+================================================================================
+
+To upgrade this release:
+  helm upgrade {{ .Release.Name }} ./todo-app \
+    --set secrets.databaseUrl="..." \
+    --set secrets.geminiApiKey="..." \
+    --set secrets.betterAuthSecret="..." \
+    --set secrets.betterAuthUrl="..."
+
+To rollback this release:
+  helm rollback {{ .Release.Name }}
+
+To view release history:
+  helm history {{ .Release.Name }}
+
+================================================================================
+  UNINSTALL
+================================================================================
+
+To remove this release:
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+================================================================================
+
+Happy coding! Visit https://github.com/your-org/todo-app for more information.
