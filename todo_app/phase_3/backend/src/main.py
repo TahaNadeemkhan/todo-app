@@ -49,6 +49,90 @@ app.include_router(notifications.router)
 # We can also mount the MCP server if we want to expose it directly (optional)
 # app.mount("/mcp", mcp_app)
 
+from fastapi import File, UploadFile
+import shutil
+import tempfile
+import base64
+import httpx
+
+@app.post("/voice/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    """
+    Transcribe audio using OpenAI Whisper OR Gemini 1.5 Flash (fallback).
+    """
+    try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+
+        # 1. Try OpenAI Whisper first
+        if openai_key:
+            # Save to temp file for OpenAI SDK
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+                shutil.copyfileobj(file.file, tmp)
+                tmp_path = tmp.name
+
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+                with open(tmp_path, "rb") as audio_file:
+                    transcription = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file
+                    )
+                return {"text": transcription.text}
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        # 2. Fallback to Gemini 1.5 Flash
+        elif gemini_key:
+            logger.info("🎙️ Using Gemini 1.5 Flash for transcription")
+            
+            # Read file bytes directly
+            file.file.seek(0)
+            audio_bytes = file.file.read()
+            b64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+
+            # Use the available model from user's list
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"text": "Please transcribe this audio file exactly. Return ONLY the transcribed text, no other commentary."},
+                        {"inline_data": {
+                            "mime_type": "audio/webm", # or match file.content_type if reliable
+                            "data": b64_audio
+                        }}
+                    ]
+                }]
+            }
+
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(url, json=payload, timeout=30.0)
+                
+                if resp.status_code != 200:
+                    logger.error(f"Gemini API Error: {resp.status_code} - {resp.text}")
+                    return JSONResponse(status_code=500, content={"error": f"Gemini STT failed: {resp.text}"})
+                
+                result = resp.json()
+                # Extract text from Gemini response structure
+                try:
+                    text = result['candidates'][0]['content']['parts'][0]['text']
+                    return {"text": text.strip()}
+                except (KeyError, IndexError) as e:
+                    logger.error(f"Failed to parse Gemini response: {result}")
+                    return JSONResponse(status_code=500, content={"error": "Invalid Gemini response format"})
+
+        else:
+            return JSONResponse(status_code=500, content={"error": "No API keys found (OPENAI_API_KEY or GEMINI_API_KEY)"})
+
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 @app.post("/chatkit", include_in_schema=False)
 async def chatkit_endpoint(

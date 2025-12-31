@@ -70,7 +70,7 @@ export const CHATKIT_OPTIONS: ChatKitOptions = {
     },
   },
   startScreen: {
-    greeting: 'Welcome to iTasks 🚀 Let\'s plan your day and get things done',
+    greeting: 'Welcome to iTasks 🚀 Let\'s plan your day',
     prompts: [
       {
         label: 'Add a new task',

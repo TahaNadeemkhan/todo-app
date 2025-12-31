@@ -33,7 +33,7 @@ frontend:
   # Health check configuration
   livenessProbe:
     httpGet:
-      path: /api/health
+      path: /
       port: 3000
     initialDelaySeconds: 30
     periodSeconds: 10
@@ -42,12 +42,19 @@ frontend:
 
   readinessProbe:
     httpGet:
-      path: /api/health
+      path: /
       port: 3000
     initialDelaySeconds: 10
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3
+
+  # Autoscaling configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
 
   # Environment variables (non-sensitive)
   env:
@@ -94,6 +101,13 @@ backend:
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3
+
+  # Autoscaling configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
 
   # Environment variables (non-sensitive)
   env:
