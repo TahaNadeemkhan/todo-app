@@ -1,31 +1,154 @@
 "use client";
 
 /**
- * Floating Chatbot Widget
- * Bottom-right floating chatbot for dashboard
- *
- * NOTE: ChatKit is a web component that only works in browser.
- * Ensure this component is only rendered client-side.
+ * Floating Chatbot Widget with Server-Side Voice Processing
+ * Records audio -> Sends to Backend -> Gets Text -> Injects into ChatKit
  */
 
-import { useState, memo } from "react";
-import { MessageCircle, X, Minimize2 } from "lucide-react";
+import { useState, memo, useRef, useCallback } from "react";
+import { MessageCircle, X, Minimize2, Mic, MicOff } from "lucide-react";
 import { ChatKit } from "@openai/chatkit-react";
 import { useChatbotContext } from "@/components/ChatbotProvider";
+import { toast } from "sonner";
 
 function FloatingChatbotInner() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Use global ChatKit instance from context (survives navigation)
-  // ✅ User context automatically extracted from JWT token on backend
-  // Note: JWT token automatically sent via cookies by /api/chatkit route
   const { control, isReady } = useChatbotContext();
 
-  // Don't render until ChatKit is ready
-  if (!isReady) {
-    return null;
-  }
+  // START RECORDING
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      
+      chunksRef.current = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        await handleAudioUpload(audioBlob);
+        
+        // Stop all tracks to release mic
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      toast.info('🎤 Recording...', { duration: 2000 });
+
+    } catch (err) {
+      console.error('Mic access denied:', err);
+      toast.error('Could not access microphone');
+    }
+  };
+
+  // STOP RECORDING
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // SEND DIRECTLY TO CHATKIT API (Bypassing DOM)
+  const sendToChatKitAPI = async (text: string) => {
+      const loadingToast = toast.loading('Sending message...');
+      try {
+          // Fix for Pydantic ValidationError: 
+          // 1. type must be 'input_text'
+          // 2. attachments and inference_options are required fields
+          const response = await fetch('/api/chatkit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  type: 'threads.create',
+                  params: {
+                      input: {
+                          content: [{ type: 'input_text', text: text }],
+                          attachments: [],
+                          inference_options: {}
+                      }
+                  }
+              }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              console.error('ChatKit Error Response:', errorData);
+              throw new Error('Failed to send message to ChatKit');
+          }
+
+          toast.dismiss(loadingToast);
+          toast.success('✅ Message sent!');
+          
+          // Reload to show the new message (since we bypassed the UI state)
+          setTimeout(() => {
+              window.location.reload();
+          }, 500);
+
+      } catch (error) {
+          console.error('API Send error:', error);
+          toast.dismiss(loadingToast);
+          toast.error('Failed to send message to Chatbot');
+      }
+  };
+
+  // SEND TO BACKEND
+  const handleAudioUpload = async (audioBlob: Blob) => {
+    const loadingToast = toast.loading('Processing voice...');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'voice.webm');
+
+      // Call Next.js API route which proxies to FastAPI
+      const response = await fetch('/api/voice/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Transcription failed');
+
+      const data = await response.json();
+      const text = data.text;
+
+      toast.dismiss(loadingToast);
+
+      if (text) {
+          toast.success(`Heard: "${text}"`);
+          // Send directly to API instead of injecting into DOM
+          sendToChatKitAPI(text);
+      } else {
+          toast.warning('Could not understand audio');
+      }
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to process voice');
+    }
+  };
+
+  const toggleVoiceInput = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isRecording]);
+
+  if (!isReady) return null;
 
   if (!isOpen) {
     return (
@@ -42,6 +165,7 @@ function FloatingChatbotInner() {
 
   return (
     <div
+      ref={containerRef}
       className={`fixed z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all ${
         isMinimized
           ? "bottom-6 right-6 w-80 h-16"
@@ -58,14 +182,12 @@ function FloatingChatbotInner() {
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="hover:bg-blue-800 p-1 rounded transition-colors"
-            aria-label={isMinimized ? "Maximize" : "Minimize"}
           >
             <Minimize2 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setIsOpen(false)}
             className="hover:bg-blue-800 p-1 rounded transition-colors"
-            aria-label="Close chatbot"
           >
             <X className="h-4 w-4" />
           </button>
@@ -74,7 +196,8 @@ function FloatingChatbotInner() {
 
       {/* ChatKit Content */}
       <div
-        className={`h-[calc(600px-64px)] overflow-hidden ${isMinimized ? 'hidden' : ''}`}
+        className={`relative overflow-hidden ${isMinimized ? 'hidden' : ''}`}
+        style={{ height: 'calc(600px - 64px)' }}
       >
         <ChatKit
           key="floating-chatbot-singleton"
@@ -82,11 +205,24 @@ function FloatingChatbotInner() {
           className="h-full w-full"
           style={{ height: '100%', width: '100%', display: 'block' }}
         />
+
+        {/* Floating Mic Button */}
+        <button
+            onClick={toggleVoiceInput}
+            className={`absolute bottom-[20px] right-[60px] z-10 p-2 rounded-full transition-all ${
+              isRecording
+                ? 'bg-red-500 text-white animate-pulse shadow-lg ring-4 ring-red-500/30'
+                : 'bg-transparent text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+            title={isRecording ? "Stop recording" : "Voice input"}
+        >
+            {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+        </button>
       </div>
     </div>
   );
 }
 
-// ✅ Memoize component to prevent unnecessary re-renders during navigation
+// Memoize to prevent unnecessary re-renders
 export const FloatingChatbot = memo(FloatingChatbotInner);
 FloatingChatbot.displayName = 'FloatingChatbot';

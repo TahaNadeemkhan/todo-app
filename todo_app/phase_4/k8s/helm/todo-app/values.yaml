@@ -1,0 +1,165 @@
+# Default values for todo-app Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  # Environment (dev, staging, production)
+  environment: dev
+
+# Frontend configuration
+frontend:
+  image:
+    repository: todo-frontend
+    tag: v1.0.0
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  service:
+    type: NodePort
+    port: 3000
+    targetPort: 3000
+    nodePort: 30080
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Autoscaling configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+  # Environment variables (non-sensitive)
+  env:
+    NODE_ENV: production
+    # NEXT_PUBLIC_API_URL will be set dynamically in deployment template
+
+# Backend configuration
+backend:
+  image:
+    repository: todo-backend
+    tag: v1.0.0
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Autoscaling configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+  # Environment variables (non-sensitive)
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: info
+    # DATABASE_URL, GEMINI_API_KEY, BETTER_AUTH_SECRET provided via --set
+
+# Secrets configuration
+# CRITICAL: These values must be provided via Helm --set flags
+# NEVER commit actual secrets to values.yaml
+secrets:
+  # Database connection string
+  # Usage: --set secrets.databaseUrl="postgresql://user:pass@host:5432/db"
+  databaseUrl: ""
+
+  # Gemini API key for chatbot functionality
+  # Usage: --set secrets.geminiApiKey="AIzaSy..."
+  geminiApiKey: ""
+
+  # Better Auth secret for authentication
+  # Usage: --set secrets.betterAuthSecret="your-secret-here"
+  betterAuthSecret: ""
+
+  # Better Auth URL (typically the frontend URL)
+  # Usage: --set secrets.betterAuthUrl="http://localhost:30080"
+  betterAuthUrl: ""
+
+# ConfigMap for shared non-sensitive configuration
+configMap:
+  # Application name
+  appName: "Todo App"
+
+  # Feature flags
+  features:
+    chatbotEnabled: "true"
+    darkModeEnabled: "true"
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  allowPrivilegeEscalation: false
+
+# Pod annotations
+podAnnotations: {}
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity: {}

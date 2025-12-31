@@ -12,7 +12,7 @@ Deploy the Phase 3 AI-powered Todo Chatbot application to a local Kubernetes clu
 1. **Dockerization**: Multi-stage builds for Next.js frontend and FastAPI backend
 2. **Helm Charts**: Single umbrella chart managing all Kubernetes resources
 3. **Minikube Deployment**: Local K8s cluster with NodePort access
-4. **AI DevOps**: Documentation for Gordon, kubectl-ai, and kagent usage
+4. **AI-Powered Orchestration**: Mandatory usage of Gordon (Docker optimization), kubectl-ai (Auto-Scaling/Manifests), and kagent (Cluster monitoring)
 5. **Bonus**: Reusable deployment skills for Claude Code
 
 ---
@@ -219,11 +219,11 @@ todo_app/phase_4/
 4. Verify pod status
 5. Test application access
 
-### Phase D: Documentation & AI Tools
-1. Document Gordon usage
-2. Document kubectl-ai usage
-3. Document kagent usage
-4. Create troubleshooting guide
+### Phase D: AI-Powered Orchestration & Monitoring
+1. **Docker Optimization**: Use Gordon to analyze and shrink Docker images
+2. **K8s Automation**: Use kubectl-ai to generate HPA and advanced manifests
+3. **Observability**: Use kagent for automated cluster health analysis and right-sizing
+4. Document AI-copilot integration steps for high-scoring demonstration
 
 ### Phase E: Bonus Features (Optional)
 1. Create k8s-deploy skill
