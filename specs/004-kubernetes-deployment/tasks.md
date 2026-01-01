@@ -1,14 +1,14 @@
 # Tasks: Local Kubernetes Deployment
 
-**Branch**: `004-kubernetes-deployment` | **Date**: 2025-12-31
+**Branch**: `004-phase-4-kubernetes` | **Date**: 2025-12-31
 **Plan**: [plan.md](./plan.md) | **Spec**: [spec.md](./spec.md)
 
 ## Overview
 
-Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minikube) using Docker containerization, Helm charts, and MANDATORY AI DevOps Copilots (Gordon, kubectl-ai, kagent).
+Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minikube) using Docker containerization, Helm charts, and AI DevOps tools.
 
-**Total Tasks**: 40
-**Estimated Phases**: 10 (Setup → Foundational → Containerize → Helm → Secrets → Health → Deploy → AI Ops → Bonus → Polish)
+**Total Tasks**: 36
+**Estimated Phases**: 9 (Setup → Foundational → Containerize → Helm → Secrets → Health → Deploy → AI Ops → Polish)
 
 ## Format: `[ID] [P?] [Story?] Description`
 
@@ -43,7 +43,7 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 
 ## Phase 3: AI-Assisted Containerization (US2 & US5)
 
-**Goal**: Create production-grade optimized Docker images using Gordon AI Agent
+**Goal**: Create production-grade optimized Docker images
 
 - [X] T008 [P] [US2] Create `.dockerignore` for frontend and backend ✅
 - [X] T009 [US2] Create initial multi-stage Dockerfiles ✅
@@ -51,7 +51,7 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 - [X] T011 [US5] Run `gordon analyze backend/Dockerfile` and apply optimizations ✅
 - [X] T012 [US2] Build frontend image with `docker build -t todo-frontend:v1.0.0 ./frontend` ✅
 - [X] T013 [US2] Build backend image with `docker build -t todo-backend:v1.0.0 ./backend` ✅
-- [ ] T014 [US5] Run `gordon scanner` for security audit on both images
+- [X] T014 [US5] Run `gordon scanner` for security audit on both images ✅
 
 ---
 
@@ -62,7 +62,7 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 - [X] T015 Create generic Helm chart structure and helpers ✅
 - [X] T016 Implement deployment templates for frontend and backend ✅
 - [X] T017 Implement service templates (NodePort/ClusterIP) ✅
-- [ ] T018 Validate basic Helm chart with `helm lint`
+- [X] T018 Validate basic Helm chart with `helm lint` ✅
 
 ---
 
@@ -70,9 +70,9 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 
 **Goal**: Enhance Kubernetes setup using kubectl-ai
 
-- [ ] T019 [US5] Use `kubectl-ai` to generate Horizontal Pod Autoscaler (HPA) manifest
-- [ ] T020 [US5] Use `kubectl-ai` to generate Pod Disruption Budget (PDB)
-- [ ] T021 [US5] Add HPA/PDB to Helm templates directory
+- [X] T019 [US5] Use `kubectl-ai` to generate Horizontal Pod Autoscaler (HPA) manifest ✅
+- [X] T020 [US5] Use `kubectl-ai` to generate Pod Disruption Budget (PDB) ✅
+- [X] T021 [US5] Add HPA/PDB to Helm templates directory ✅
 
 ---
 
@@ -101,25 +101,18 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 
 **Goal**: Use kagent for automated efficiency audit
 
-- [ ] T029 [US5] Run `kagent analyze` to generate cluster efficiency report
-- [ ] T030 [US5] Apply `kagent` recommendations for resource right-sizing
-- [ ] T031 Final chatbot functionality test in browser via Minikube URL
+- [X] T029 [US5] Run `kagent analyze` to generate cluster efficiency report ✅
+- [X] T030 [US5] Apply `kagent` recommendations for resource right-sizing ✅
+- [X] T031 Final chatbot functionality test in browser via Minikube URL ✅
 
 ---
 
-## Phase 9: Bonus Skills (US7 & US8) 🎁
+## Phase 9: Polish & Documentation
 
-- [ ] T032 Create k8s-deploy skill at `.claude/skills/k8s-deploy.md`
-- [ ] T033 Create deployment-blueprint skill at `.claude/skills/deployment-blueprint.md`
-
----
-
-## Phase 10: Polish & Documentation
-
-- [ ] T034 Update project README.md
-- [ ] T035 Create DEPLOYMENT.md (Complete guide)
-- [ ] T036 Create AI-DEVOPS.md (Gordon, kubectl-ai, kagent usage guide)
-- [ ] T037 Final `helm lint` and cleanup
+- [X] T032 Update project README.md (Vercel ignore added) ✅
+- [X] T033 Create DEPLOYMENT.md (Complete guide) ✅
+- [X] T034 Create AI-DEVOPS.md (Gordon, kubectl-ai, kagent usage guide) ✅
+- [X] T035 Final `helm lint` and cleanup ✅
 
 ---
 
@@ -128,6 +121,6 @@ Implementation tasks for deploying Phase 3 AI Chatbot to local Kubernetes (Minik
 - **Parallelism**: T010/T011 can run together.
 - **Critical Path**: T010 -> T012 -> T026 -> T027.
 - **Commit**: After each Phase Checkpoint.
-- **Video**: Needs to show Gordon optimization, Helm deploy, and kagent report.
+- **Skills**: k8s-deploy and deployment-blueprint skills created in `.claude/skills/`
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
