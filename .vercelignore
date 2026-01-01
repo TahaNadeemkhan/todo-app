@@ -1,0 +1,49 @@
+# Vercel Ignore File
+# These files/directories will be ignored during deployment
+
+# ============================================
+# Kubernetes & Infrastructure (Phase 4)
+# ============================================
+k8s/
+helm/
+*.kubeconfig
+kubeconfig*
+SECURITY_AUDIT.md
+
+# ============================================
+# Phase 4 Code (Not for Vercel)
+# ============================================
+todo_app/phase_4/
+
+# ============================================
+# Development & Debug Files
+# ============================================
+errors/
+*.log
+.env*
+.git/
+.gitignore
+README.md
+
+# ============================================
+# IDE and OS Files
+# ============================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Claude Code Files
+# ============================================
+.claude/
+.specify/
+history/
+
+# ============================================
+# Spec Files (Documentation Only)
+# ============================================
+specs/
+*.spec.md
+*.plan.md
+*.tasks.md
