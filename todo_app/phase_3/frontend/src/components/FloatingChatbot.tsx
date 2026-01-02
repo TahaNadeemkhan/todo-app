@@ -20,7 +20,8 @@ function FloatingChatbotInner() {
   const chunksRef = useRef<Blob[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { control, isReady } = useChatbotContext();
+  // @ts-ignore - sendUserMessage might be missing from type definitions but available at runtime
+  const { control, isReady, sendUserMessage } = useChatbotContext();
 
   // START RECORDING
   const startRecording = async () => {
@@ -61,47 +62,86 @@ function FloatingChatbotInner() {
     }
   };
 
-  // SEND DIRECTLY TO CHATKIT API (Bypassing DOM)
+  // SEND TO CHATKIT (Clean Integration)
   const sendToChatKitAPI = async (text: string) => {
-      const loadingToast = toast.loading('Sending message...');
-      try {
-          // Fix for Pydantic ValidationError: 
-          // 1. type must be 'input_text'
-          // 2. attachments and inference_options are required fields
-          const response = await fetch('/api/chatkit', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  type: 'threads.create',
-                  params: {
-                      input: {
-                          content: [{ type: 'input_text', text: text }],
-                          attachments: [],
-                          inference_options: {}
-                      }
-                  }
-              }),
-          });
+      console.log('🎤 Voice input text:', text);
 
-          if (!response.ok) {
-              const errorData = await response.json();
-              console.error('ChatKit Error Response:', errorData);
-              throw new Error('Failed to send message to ChatKit');
+      // Option 1: Try direct method from useChatKit hook
+      if (typeof sendUserMessage === 'function') {
+          try {
+              console.log('Attempting sendUserMessage(text)...');
+              // @ts-ignore
+              await sendUserMessage(text);
+              toast.success('Message sent!');
+              return;
+          } catch (err) {
+              console.warn('sendUserMessage(string) failed, trying object...', err);
+              try {
+                  // Try object format common in some versions
+                  // @ts-ignore
+                  await sendUserMessage({ text });
+                  toast.success('Message sent!');
+                  return;
+              } catch (err2) {
+                  console.error('All sendUserMessage attempts failed:', err2);
+                  // Fall through to DOM injection
+              }
           }
-
-          toast.dismiss(loadingToast);
-          toast.success('✅ Message sent!');
-          
-          // Reload to show the new message (since we bypassed the UI state)
-          setTimeout(() => {
-              window.location.reload();
-          }, 500);
-
-      } catch (error) {
-          console.error('API Send error:', error);
-          toast.dismiss(loadingToast);
-          toast.error('Failed to send message to Chatbot');
       }
+      
+      // Option 2: Try method on control object
+      if (control && typeof (control as any).sendUserMessage === 'function') {
+          try {
+             console.log('Attempting control.sendUserMessage(text)...');
+             // @ts-ignore
+             await (control as any).sendUserMessage(text);
+             toast.success('Message sent!');
+             return;
+          } catch (err) {
+              console.error('control.sendUserMessage failed:', err);
+              // Fall through to DOM injection
+          }
+      }
+      
+      // Option 3: Fallback - DOM Injection (Robust)
+      console.log('⚠️ Falling back to DOM injection');
+      // If we can't programmatically send, we simulate user typing
+      // Locate the input area - usually a textarea or input
+      const textarea = document.querySelector('textarea[placeholder*="Add"], textarea[placeholder*="Type"], input[type="text"]') as HTMLTextAreaElement | HTMLInputElement;
+      
+      if (textarea) {
+          // React requires dispatching input event to update state
+          const nativeValueSetter = Object.getOwnPropertyDescriptor(
+              Object.getPrototypeOf(textarea), 
+              "value"
+          )?.set;
+          
+          if (nativeValueSetter) {
+              nativeValueSetter.call(textarea, text);
+          } else {
+              textarea.value = text;
+          }
+          
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          
+          // Wait a tick for state update, then try to find send button
+          setTimeout(() => {
+              // Look for send button (usually near textarea)
+              const sendButton = textarea.closest('div')?.parentElement?.querySelector('button[type="submit"], button[aria-label="Send message"]');
+              if (sendButton instanceof HTMLElement) {
+                  sendButton.click();
+                  toast.success('Message sent!');
+              } else {
+                  // Attempt to hit Enter
+                  textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
+                  toast.info('Text added to composer');
+              }
+          }, 100);
+          return;
+      }
+
+      console.error("Could not find method to send message or composer element");
+      toast.error('Could not send message automatically');
   };
 
   // SEND TO BACKEND

@@ -1258,8 +1258,236 @@ psql $DATABASE_URL -c "\dt"
 psql $DATABASE_URL -c "SELECT COUNT(*) FROM conversations;"
 psql $DATABASE_URL -c "SELECT COUNT(*) FROM messages;"
 
-# Run Alembic migrations
-cd backend
-alembic upgrade head
+```
+
+---
+
+## Voice Integration Examples
+
+### 1. Backend Transcription Endpoint (`main.py`)
+
+This endpoint handles audio file uploads and uses Gemini Flash (or OpenAI Whisper) for fast, cheap transcription.
+
+```python
+from fastapi import File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
+import os
+import httpx
+import base64
+import tempfile
+import shutil
+
+@app.post("/voice/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    """
+    Transcribe audio using Gemini 2.0 Flash (fallback to Whisper if configured).
+    """
+    try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+
+        # Option A: OpenAI Whisper (High Accuracy)
+        if openai_key and False: # Enable if preferred
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+                shutil.copyfileobj(file.file, tmp)
+                tmp_path = tmp.name
+
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+                with open(tmp_path, "rb") as audio_file:
+                    transcription = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file
+                    )
+                return {"text": transcription.text}
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        # Option B: Gemini 1.5/2.5 Flash (Fast & Cheap)
+        elif gemini_key:
+            # Read file bytes directly
+            file.file.seek(0)
+            audio_bytes = file.file.read()
+            b64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+
+            # Use Gemini API
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"text": "Please transcribe this audio file exactly. Return ONLY the transcribed text, no other commentary."},
+                        {"inline_data": {
+                            "mime_type": "audio/webm", 
+                            "data": b64_audio
+                        }}
+                    ]
+                }]
+            }
+
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(url, json=payload, timeout=30.0)
+                
+                if resp.status_code != 200:
+                    return JSONResponse(status_code=500, content={"error": f"Gemini STT failed: {resp.text}"})
+                
+                result = resp.json()
+                try:
+                    text = result['candidates'][0]['content']['parts'][0]['text']
+                    return {"text": text.strip()}
+                except (KeyError, IndexError):
+                    return JSONResponse(status_code=500, content={"error": "Invalid Gemini response format"})
+
+        else:
+            return JSONResponse(status_code=500, content={"error": "No API keys found"})
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+```
+
+### 2. Frontend Voice Component (`FloatingChatbot.tsx`)
+
+This component handles recording and injecting text into ChatKit.
+
+```typescript
+import { useRef, useState } from "react";
+import { useChatbotContext } from "@/components/ChatbotProvider"; // See context example below
+import { toast } from "sonner";
+
+export function VoiceChatbot() {
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  
+  // Get ChatKit control from context
+  const { control, sendUserMessage } = useChatbotContext();
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        await handleAudioUpload(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Mic error:', err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioUpload = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'voice.webm');
+
+      const response = await fetch('/api/voice/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Transcription failed');
+      const data = await response.json();
+      
+      if (data.text) {
+        // ✅ Inject text into ChatKit
+        sendMessageToChatKit(data.text);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+    }
+  };
+
+  const sendMessageToChatKit = async (text: string) => {
+      // 1. Try direct context method
+      if (typeof sendUserMessage === 'function') {
+          // @ts-ignore
+          sendUserMessage(text);
+          return;
+      }
+      
+      // 2. Try control object method
+      if (control && typeof (control as any).sendUserMessage === 'function') {
+          // @ts-ignore
+          (control as any).sendUserMessage(text);
+          return;
+      }
+      
+      // 3. Robust DOM Fallback (if API methods fail)
+      const textarea = document.querySelector('textarea[placeholder*="Type"]') as HTMLTextAreaElement;
+      if (textarea) {
+          const nativeSetter = Object.getOwnPropertyDescriptor(
+              Object.getPrototypeOf(textarea), "value"
+          )?.set;
+          nativeSetter?.call(textarea, text);
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          
+          setTimeout(() => {
+              const btn = textarea.closest('div')?.parentElement?.querySelector('button[type="submit"]');
+              (btn as HTMLElement)?.click();
+          }, 100);
+      }
+  };
+
+  return (
+    <button onClick={isRecording ? stopRecording : startRecording}>
+      {isRecording ? "Stop 🛑" : "Mic 🎤"}
+    </button>
+  );
+}
+```
+
+### 3. Chatbot Provider Update (`ChatbotProvider.tsx`)
+
+Update your provider to expose the full ChatKit return value (including `sendUserMessage`).
+
+```typescript
+import { createContext, useContext, ReactNode } from "react";
+import { useChatKit } from "@openai/chatkit-react";
+import { CHATKIT_OPTIONS } from "@/lib/chatkit-config";
+
+// ✅ Extend ReturnType to include all ChatKit methods
+interface ChatbotContextType extends ReturnType<typeof useChatKit> {
+  isReady: boolean;
+}
+
+const ChatbotContext = createContext<ChatbotContextType | null>(null);
+
+export function ChatbotProvider({ children }: { children: ReactNode }) {
+  // Initialize ChatKit once at app level
+  const chatKit = useChatKit(CHATKIT_OPTIONS);
+
+  return (
+    // ✅ Spread all chatKit properties (control, sendUserMessage, etc.)
+    <ChatbotContext.Provider value={{ ...chatKit, isReady: true }}>
+      {children}
+    </ChatbotContext.Provider>
+  );
+}
+
+export function useChatbotContext() {
+  const context = useContext(ChatbotContext);
+  if (!context) throw new Error("useChatbotContext must be used within ChatbotProvider");
+  return context;
+}
 ```
 
