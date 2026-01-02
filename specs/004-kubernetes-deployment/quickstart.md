@@ -1,8 +1,8 @@
 # Quickstart: Local Kubernetes Deployment
 
 **Feature**: 004-kubernetes-deployment
-**Date**: 2025-12-26
-**Time to Complete**: ~30 minutes
+**Date**: 2026-01-02
+**Time to Complete**: ~15 minutes (if prerequisites installed)
 
 ---
 
@@ -17,12 +17,13 @@
 | kubectl | 1.28+ | `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install kubectl /usr/local/bin/kubectl` |
 | Helm | 3.12+ | `curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \| bash` |
 
-### Required Credentials
+### Required Credentials (from Phase 3)
 
-Ensure you have these from Phase 3:
-- `DATABASE_URL` - Neon PostgreSQL connection string
-- `OPENAI_API_KEY` - OpenAI API key
-- `BETTER_AUTH_SECRET` - Better Auth secret
+```bash
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+BETTER_AUTH_SECRET="your-auth-secret"
+GEMINI_API_KEY="your-gemini-key"  # For AI chatbot
+```
 
 ### System Requirements
 
@@ -32,236 +33,320 @@ Ensure you have these from Phase 3:
 
 ---
 
-## Quick Deploy (5 Steps)
+## Quick Deploy (Copy-Paste Commands)
 
 ### Step 1: Start Minikube
 
 ```bash
-# Start with recommended resources
+# Start Minikube with Docker driver
 minikube start --driver=docker --cpus=4 --memory=4096
 
-# Verify
+# Verify it's running
 minikube status
 ```
 
 ### Step 2: Build Docker Images
 
 ```bash
-cd todo_app/phase_4
+# Navigate to Phase 4 directory
+cd /mnt/d/piaic/todo-app/todo_app/phase_4
 
-# Build frontend
-docker build -t todo-frontend:v1.0.0 ./frontend
+# Build Frontend image
+docker build -t todo-frontend:v1.0.0 -f frontend/Dockerfile frontend/
 
-# Build backend
-docker build -t todo-backend:v1.0.0 ./backend
+# Build Backend image
+docker build -t todo-backend:v1.0.0 -f backend/Dockerfile backend/
 ```
 
 ### Step 3: Load Images into Minikube
 
 ```bash
+# Load images into Minikube's registry
 minikube image load todo-frontend:v1.0.0
 minikube image load todo-backend:v1.0.0
 
-# Verify images loaded
+# Verify images are loaded
 minikube image ls | grep todo
 ```
 
 ### Step 4: Deploy with Helm
 
 ```bash
-# Navigate to helm chart
-cd k8s/helm
+# Navigate to Helm chart directory
+cd /mnt/d/piaic/todo-app/todo_app/phase_4/k8s/helm
 
-# Install (replace placeholders with your actual values)
+# Deploy (replace with YOUR actual values)
 helm install todo-app ./todo-app \
-  --set secrets.databaseUrl="postgresql://user:pass@host/db" \
-  --set secrets.openaiApiKey="sk-your-key" \
-  --set secrets.betterAuthSecret="your-secret"
+  --set secrets.databaseUrl="postgresql://neondb_owner:YOUR_PASSWORD@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require" \
+  --set secrets.betterAuthSecret="YOUR_BETTER_AUTH_SECRET" \
+  --set secrets.betterAuthUrl="http://localhost:3000" \
+  --set secrets.geminiApiKey="YOUR_GEMINI_API_KEY"
+
+# Verify pods are running
+kubectl get pods -w
 ```
 
-### Step 5: Access Application
+### Step 5: Setup Port Forwards (IMPORTANT!)
 
 ```bash
-# Get the URL
-minikube service todo-frontend-svc --url
+# Terminal 1: Frontend port-forward
+kubectl port-forward svc/todo-app-frontend 3000:3000
 
-# Open in browser or curl
-curl $(minikube service todo-frontend-svc --url)
+# Terminal 2: Backend port-forward
+kubectl port-forward svc/todo-app-backend 8000:8000
+```
+
+**Or run both in background:**
+
+```bash
+kubectl port-forward svc/todo-app-frontend 3000:3000 > /dev/null 2>&1 &
+kubectl port-forward svc/todo-app-backend 8000:8000 > /dev/null 2>&1 &
+```
+
+### Step 6: Access Application
+
+Open browser: **http://localhost:3000**
+
+---
+
+## One-Liner Quick Start (After Prerequisites)
+
+```bash
+# Full deployment in one command (run from project root)
+cd /mnt/d/piaic/todo-app/todo_app/phase_4 && \
+docker build -t todo-frontend:v1.0.0 -f frontend/Dockerfile frontend/ && \
+docker build -t todo-backend:v1.0.0 -f backend/Dockerfile backend/ && \
+minikube image load todo-frontend:v1.0.0 && \
+minikube image load todo-backend:v1.0.0 && \
+cd k8s/helm && \
+helm upgrade --install todo-app ./todo-app \
+  --set secrets.databaseUrl="$DATABASE_URL" \
+  --set secrets.betterAuthSecret="$BETTER_AUTH_SECRET" \
+  --set secrets.betterAuthUrl="http://localhost:3000" \
+  --set secrets.geminiApiKey="$GEMINI_API_KEY" && \
+kubectl port-forward svc/todo-app-frontend 3000:3000 &
+kubectl port-forward svc/todo-app-backend 8000:8000 &
+echo "App running at http://localhost:3000"
 ```
 
 ---
 
-## Verification Checklist
+## Verification Commands
 
 ```bash
 # Check all pods are running
 kubectl get pods
-
-# Expected output:
-# NAME                            READY   STATUS    RESTARTS   AGE
-# todo-frontend-xxx-xxx           1/1     Running   0          1m
-# todo-backend-xxx-xxx            1/1     Running   0          1m
+# Expected: 2 frontend pods, 2 backend pods (STATUS: Running)
 
 # Check services
 kubectl get svc
-
-# Expected output:
-# NAME                TYPE        CLUSTER-IP      PORT(S)          AGE
-# todo-frontend-svc   NodePort    10.x.x.x        3000:30080/TCP   1m
-# todo-backend-svc    ClusterIP   10.x.x.x        8000/TCP         1m
+# Expected: todo-app-frontend (NodePort 30080), todo-app-backend (NodePort 30081)
 
 # Check backend health
-kubectl exec -it $(kubectl get pod -l app=backend -o jsonpath='{.items[0].metadata.name}') -- curl localhost:8000/health
+curl http://localhost:8000/health
+# Expected: {"status":"ok"}
+
+# Check frontend
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+# Expected: 200
+
+# View pod logs
+kubectl logs -l app.kubernetes.io/component=frontend --tail=20
+kubectl logs -l app.kubernetes.io/component=backend --tail=20
 ```
 
 ---
 
-## Common Commands
+## Common Commands Reference
 
 ### View Logs
 
 ```bash
-# Frontend logs
-kubectl logs -l app=frontend -f
+# Frontend logs (live)
+kubectl logs -l app.kubernetes.io/component=frontend -f
 
-# Backend logs
-kubectl logs -l app=backend -f
+# Backend logs (live)
+kubectl logs -l app.kubernetes.io/component=backend -f
 ```
 
-### Restart Deployment
+### Restart Deployments
 
 ```bash
-kubectl rollout restart deployment todo-frontend
-kubectl rollout restart deployment todo-backend
+kubectl rollout restart deployment todo-app-frontend
+kubectl rollout restart deployment todo-app-backend
 ```
 
 ### Scale Replicas
 
 ```bash
-kubectl scale deployment todo-frontend --replicas=3
-kubectl scale deployment todo-backend --replicas=3
+kubectl scale deployment todo-app-frontend --replicas=3
+kubectl scale deployment todo-app-backend --replicas=3
 ```
 
-### Update Deployment
+### Update Configuration
 
 ```bash
-helm upgrade todo-app ./todo-app --set frontend.replicaCount=3
+helm upgrade todo-app ./todo-app \
+  --set frontend.replicaCount=3 \
+  --set backend.replicaCount=3
 ```
 
-### Uninstall
+### Check Resource Usage
 
 ```bash
-helm uninstall todo-app
+kubectl top pods
+kubectl top nodes
 ```
 
-### Stop Minikube
+### Exec into Pod
 
 ```bash
-minikube stop
+# Frontend
+kubectl exec -it $(kubectl get pod -l app.kubernetes.io/component=frontend -o jsonpath='{.items[0].metadata.name}') -- sh
+
+# Backend
+kubectl exec -it $(kubectl get pod -l app.kubernetes.io/component=backend -o jsonpath='{.items[0].metadata.name}') -- sh
 ```
 
 ---
 
-## AI-Assisted Commands (Optional)
-
-If you have AI tools installed:
-
-### Gordon (Docker AI)
+## Cleanup Commands
 
 ```bash
-# Build with AI assistance
-docker ai "build production image for Next.js in ./frontend"
-```
+# Stop port-forwards
+pkill -f "kubectl port-forward"
 
-### kubectl-ai
+# Uninstall Helm release
+helm uninstall todo-app
 
-```bash
-# Query with natural language
-kubectl-ai "show me all pods and their resource usage"
-kubectl-ai "why is the backend pod failing?"
-```
+# Stop Minikube
+minikube stop
 
-### kagent
-
-```bash
-# Analyze cluster
-kagent analyze
+# Delete Minikube cluster (full reset)
+minikube delete
 ```
 
 ---
 
 ## Troubleshooting
 
-### Pod not starting (Pending)
+### Error: `ERR_CONNECTION_REFUSED` on localhost:3000
 
+**Cause:** Port-forward not running or local dev server blocking port
+
+**Fix:**
 ```bash
-# Check events
-kubectl describe pod <pod-name>
+# Kill any local dev servers
+pkill -f "next dev"
 
-# Common causes:
-# - Insufficient resources → Increase Minikube resources
-# - Image not found → Run minikube image load
+# Restart port-forward
+kubectl port-forward svc/todo-app-frontend 3000:3000
 ```
 
-### CrashLoopBackOff
+### Error: Tasks not loading (backend connection refused)
 
+**Cause:** Backend port-forward stopped
+
+**Fix:**
+```bash
+# Check if port 8000 is listening
+ss -tlnp | grep 8000
+
+# If not, restart port-forward
+kubectl port-forward svc/todo-app-backend 8000:8000
+```
+
+### Error: Pods in `Pending` state
+
+**Cause:** Insufficient Minikube resources or images not loaded
+
+**Fix:**
+```bash
+# Check pod events
+kubectl describe pod <pod-name>
+
+# Reload images
+minikube image load todo-frontend:v1.0.0 --overwrite
+minikube image load todo-backend:v1.0.0 --overwrite
+```
+
+### Error: `CrashLoopBackOff`
+
+**Cause:** Application crash (usually missing env vars or DB connection)
+
+**Fix:**
 ```bash
 # Check logs
 kubectl logs <pod-name> --previous
 
-# Common causes:
-# - Missing env vars → Check secrets/configmap
-# - Database connection → Verify DATABASE_URL
+# Verify secrets are set
+kubectl get secret todo-app-secret -o yaml
 ```
 
-### Service not accessible
+### Error: Images not found
 
+**Cause:** Images not loaded into Minikube
+
+**Fix:**
 ```bash
-# Check service
-kubectl describe svc todo-frontend-svc
+# Option 1: Load images
+minikube image load todo-frontend:v1.0.0
 
-# Try port-forward as alternative
-kubectl port-forward svc/todo-frontend-svc 3000:3000
-```
-
-### Images not found in Minikube
-
-```bash
-# Re-load images
-minikube image load todo-frontend:v1.0.0 --overwrite
-
-# Or use Minikube's Docker daemon
+# Option 2: Use Minikube's Docker daemon
 eval $(minikube docker-env)
-docker build -t todo-frontend:v1.0.0 ./frontend
+docker build -t todo-frontend:v1.0.0 -f frontend/Dockerfile frontend/
 ```
 
 ---
 
-## Next Steps
+## Architecture Overview
 
-1. **Test chatbot functionality** - Create tasks via chat interface
-2. **Monitor resources** - `kubectl top pods`
-3. **Review logs** - Check for errors or warnings
-4. **Create demo video** - Record <90 second walkthrough
-5. **Document in README** - Update project documentation
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Minikube Cluster                        │
+│                                                             │
+│  ┌─────────────────────┐    ┌─────────────────────┐        │
+│  │  Frontend Pods (2)  │    │  Backend Pods (2)   │        │
+│  │  Next.js App        │───▶│  FastAPI Server     │        │
+│  │  Port: 3000         │    │  Port: 8000         │        │
+│  └─────────────────────┘    └─────────────────────┘        │
+│           │                          │                      │
+│           ▼                          ▼                      │
+│  ┌─────────────────────┐    ┌─────────────────────┐        │
+│  │  NodePort: 30080    │    │  NodePort: 30081    │        │
+│  └─────────────────────┘    └─────────────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+           │                          │
+           ▼                          ▼
+    kubectl port-forward        kubectl port-forward
+    localhost:3000 ─────────▶   localhost:8000 ─────────▶
+           │                          │
+           ▼                          ▼
+    ┌───────────┐              ┌─────────────────┐
+    │  Browser  │              │  Neon Database  │
+    │  User     │              │  (External)     │
+    └───────────┘              └─────────────────┘
+```
 
 ---
 
-## File Structure After Deployment
+## File Structure
 
 ```
 todo_app/phase_4/
 ├── frontend/
-│   ├── Dockerfile           # Multi-stage build
-│   └── ...                  # Phase 3 code
+│   ├── Dockerfile           # Multi-stage Next.js build
+│   ├── src/                 # Next.js app code
+│   └── package.json
 ├── backend/
-│   ├── Dockerfile           # Multi-stage build
-│   └── ...                  # Phase 3 code
+│   ├── Dockerfile           # Multi-stage FastAPI build
+│   ├── main.py              # FastAPI entry point
+│   └── requirements.txt
 └── k8s/
     └── helm/
         └── todo-app/
-            ├── Chart.yaml
-            ├── values.yaml
+            ├── Chart.yaml           # Helm chart metadata
+            ├── values.yaml          # Configuration values
             └── templates/
                 ├── frontend-deployment.yaml
                 ├── frontend-service.yaml
@@ -270,3 +355,57 @@ todo_app/phase_4/
                 ├── configmap.yaml
                 └── secret.yaml
 ```
+
+---
+
+## Service Ports Reference
+
+| Service | Internal Port | NodePort | Port-Forward |
+|---------|---------------|----------|--------------|
+| Frontend | 3000 | 30080 | localhost:3000 |
+| Backend | 8000 | 30081 | localhost:8000 |
+
+---
+
+## Environment Variables
+
+### Frontend (Next.js)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000` |
+| `NEXT_PUBLIC_APP_URL` | Frontend URL | `http://localhost:3000` |
+| `DATABASE_URL` | Neon PostgreSQL | `postgresql://...` |
+| `BETTER_AUTH_SECRET` | Auth secret | `random-secret` |
+
+### Backend (FastAPI)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | Neon PostgreSQL | `postgresql://...` |
+| `GEMINI_API_KEY` | AI chatbot key | `AIzaSy...` |
+| `BETTER_AUTH_SECRET` | Auth secret | `random-secret` |
+| `BETTER_AUTH_URL` | Auth server URL | `http://localhost:3000` |
+
+---
+
+## Quick Reference Card
+
+```bash
+# Start everything
+minikube start && \
+kubectl port-forward svc/todo-app-frontend 3000:3000 & \
+kubectl port-forward svc/todo-app-backend 8000:8000 &
+
+# Check status
+kubectl get pods && kubectl get svc
+
+# View logs
+kubectl logs -l app.kubernetes.io/component=frontend -f
+kubectl logs -l app.kubernetes.io/component=backend -f
+
+# Stop everything
+pkill -f "kubectl port-forward" && minikube stop
+```
+
+**App URL:** http://localhost:3000
