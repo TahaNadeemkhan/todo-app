@@ -46,7 +46,7 @@ function FloatingChatbotInner() {
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
-      toast.info('🎤 Recording...', { duration: 2000 });
+      // Removed intrusive toast.info('Recording...') - visual pulse is enough
 
     } catch (err) {
       console.error('Mic access denied:', err);
@@ -72,7 +72,7 @@ function FloatingChatbotInner() {
               console.log('Attempting sendUserMessage(text)...');
               // @ts-ignore
               await sendUserMessage(text);
-              toast.success('Message sent!');
+              // Removed toast.success('Message sent!') - redundant as message appears in chat
               return;
           } catch (err) {
               console.warn('sendUserMessage(string) failed, trying object...', err);
@@ -80,7 +80,6 @@ function FloatingChatbotInner() {
                   // Try object format common in some versions
                   // @ts-ignore
                   await sendUserMessage({ text });
-                  toast.success('Message sent!');
                   return;
               } catch (err2) {
                   console.error('All sendUserMessage attempts failed:', err2);
@@ -95,7 +94,6 @@ function FloatingChatbotInner() {
              console.log('Attempting control.sendUserMessage(text)...');
              // @ts-ignore
              await (control as any).sendUserMessage(text);
-             toast.success('Message sent!');
              return;
           } catch (err) {
               console.error('control.sendUserMessage failed:', err);
@@ -130,11 +128,9 @@ function FloatingChatbotInner() {
               const sendButton = textarea.closest('div')?.parentElement?.querySelector('button[type="submit"], button[aria-label="Send message"]');
               if (sendButton instanceof HTMLElement) {
                   sendButton.click();
-                  toast.success('Message sent!');
               } else {
                   // Attempt to hit Enter
                   textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
-                  toast.info('Text added to composer');
               }
           }, 100);
           return;
@@ -146,7 +142,8 @@ function FloatingChatbotInner() {
 
   // SEND TO BACKEND
   const handleAudioUpload = async (audioBlob: Blob) => {
-    const loadingToast = toast.loading('Processing voice...');
+    // Removed toast.loading - visual state should be enough, or add a small spinner if needed
+    // But for now, we'll just keep it clean as requested.
     
     try {
       const formData = new FormData();
@@ -163,10 +160,8 @@ function FloatingChatbotInner() {
       const data = await response.json();
       const text = data.text;
 
-      toast.dismiss(loadingToast);
-
       if (text) {
-          toast.success(`Heard: "${text}"`);
+          // Removed toast.success(`Heard: "${text}"`) - redundant
           // Send directly to API instead of injecting into DOM
           sendToChatKitAPI(text);
       } else {
@@ -175,7 +170,6 @@ function FloatingChatbotInner() {
 
     } catch (error) {
       console.error('Upload error:', error);
-      toast.dismiss(loadingToast);
       toast.error('Failed to process voice');
     }
   };

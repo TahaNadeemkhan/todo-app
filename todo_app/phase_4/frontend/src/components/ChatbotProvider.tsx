@@ -10,8 +10,7 @@ import { createContext, useContext, ReactNode, useEffect, useState } from "react
 import { useChatKit } from "@openai/chatkit-react";
 import { CHATKIT_OPTIONS } from "@/lib/chatkit-config";
 
-interface ChatbotContextType {
-  control: ReturnType<typeof useChatKit>["control"];
+interface ChatbotContextType extends ReturnType<typeof useChatKit> {
   isReady: boolean;
 }
 
@@ -26,11 +25,11 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Initialize ChatKit once at app level
-  const { control } = useChatKit(CHATKIT_OPTIONS);
+  const chatKit = useChatKit(CHATKIT_OPTIONS);
 
   // Always provide context, but with isReady flag
   return (
-    <ChatbotContext.Provider value={{ control, isReady: isMounted }}>
+    <ChatbotContext.Provider value={{ ...chatKit, isReady: isMounted }}>
       {children}
     </ChatbotContext.Provider>
   );
