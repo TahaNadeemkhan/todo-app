@@ -7,7 +7,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth"; // Better Auth server instance
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
 
 export async function GET(request: NextRequest) {
   console.log("🔍 ChatKit GET request received");

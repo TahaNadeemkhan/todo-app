@@ -11,7 +11,7 @@ global:
 frontend:
   image:
     repository: todo-frontend
-    tag: latest
+    tag: v1.0.0
     pullPolicy: IfNotPresent
 
   replicaCount: 2
@@ -65,16 +65,15 @@ frontend:
 backend:
   image:
     repository: todo-backend
-    tag: latest
+    tag: v1.0.0
     pullPolicy: IfNotPresent
 
   replicaCount: 2
 
   service:
-    type: NodePort
+    type: ClusterIP
     port: 8000
     targetPort: 8000
-    nodePort: 30081
 
   resources:
     requests:

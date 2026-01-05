@@ -16,12 +16,11 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir uv
 
 # Copy dependency files first (for layer caching)
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
 
 # Install dependencies using uv
-# --frozen ensures exact versions from uv.lock
 # --no-dev excludes development dependencies
-RUN uv sync --frozen --no-dev
+RUN uv sync --no-dev
 
 # ============================================
 # Stage 2: Runner (Production)
