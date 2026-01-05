@@ -1,6 +1,7 @@
 # Specification Quality Checklist: Phase 5 - Event-Driven Cloud Deployment
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Purpose**: Validate specificatio
+n completeness and quality before proceeding to planning
 **Created**: 2026-01-04
 **Feature**: [spec.md](../spec.md)
 
