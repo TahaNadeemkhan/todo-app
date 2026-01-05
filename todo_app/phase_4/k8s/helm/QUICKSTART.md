@@ -58,7 +58,7 @@ helm template todo-app ./todo-app \
 
 # Or with environment variables
 DATABASE_URL="postgresql://user:pass@host:5432/db" \
-GEMINI_API_KEY="AIzaSyBNJB6NIyJgD-dAKoZY2vJRr0rJA2UjdnE" \
+GEMINI_API_KEY="AIzaSyDummyKeyForDocumentation" \
 BETTER_AUTH_SECRET="your-secret-here" \
 BETTER_AUTH_URL="http://$(minikube ip):30080" \
 ./install.sh
@@ -73,7 +73,7 @@ export MINIKUBE_IP=$(minikube ip)
 # Install with Helm
 helm install todo-app ./todo-app \
   --set secrets.databaseUrl="postgresql://user:password@host.neon.tech:5432/database?sslmode=require" \
-  --set secrets.geminiApiKey="AIzaSyBNJB6NIyJgD-dAKoZY2vJRr0rJA2UjdnE" \
+  --set secrets.geminiApiKey="AIzaSyDummyKeyForDocumentation" \
   --set secrets.betterAuthSecret="your-secret-key-here" \
   --set secrets.betterAuthUrl="http://${MINIKUBE_IP}:30080"
 ```

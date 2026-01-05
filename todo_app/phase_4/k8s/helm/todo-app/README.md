@@ -54,7 +54,7 @@ cd /mnt/f/todo-app/todo_app/phase_4/k8s/helm
 # Install with required secrets
 helm install todo-app ./todo-app \
   --set secrets.databaseUrl="postgresql://user:password@host:5432/database" \
-  --set secrets.geminiApiKey="AIzaSyBNJB6NIyJgD-dAKoZY2vJRr0rJA2UjdnE" \
+  --set secrets.geminiApiKey="AIzaSyDummyKeyForDocumentation" \
   --set secrets.betterAuthSecret="your-secret-key-here" \
   --set secrets.betterAuthUrl="http://$(minikube ip):30080"
 ```
