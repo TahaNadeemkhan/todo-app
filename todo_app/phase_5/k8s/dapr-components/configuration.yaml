@@ -1,0 +1,43 @@
+# Dapr Configuration for mTLS and global settings
+# Based on Hackathon II Document - Phase V Requirements
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+  namespace: default
+spec:
+  # Enable mTLS for service-to-service communication
+  mtls:
+    enabled: true
+    workloadCertTTL: "24h"
+    allowedClockSkew: "15m"
+
+  # Tracing configuration (optional)
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin.default.svc.cluster.local:9411/api/v2/spans"
+
+  # Metrics configuration
+  metric:
+    enabled: true
+
+  # Access control policies
+  accessControl:
+    defaultAction: deny
+    trustDomain: "public"
+    policies:
+      - appId: backend-service
+        defaultAction: allow
+        trustDomain: "public"
+        namespace: "default"
+
+      - appId: notification-service
+        defaultAction: allow
+        trustDomain: "public"
+        namespace: "default"
+
+      - appId: recurring-task-service
+        defaultAction: allow
+        trustDomain: "public"
+        namespace: "default"

@@ -27,14 +27,15 @@ This is a web application with microservices:
 
 **Purpose**: Project initialization and Phase 5 structure
 
-- [ ] T001 Create Phase 5 directory structure (backend/, services/, frontend/, k8s/)
-- [ ] T002 Copy Phase 3 backend to Phase 5 and update dependencies (FastAPI 0.115+, Dapr SDK 1.14+)
-- [ ] T003 [P] Copy Phase 3 frontend to Phase 5 and update dependencies (Next.js 15+, React 19+)
-- [ ] T004 [P] Initialize notification-service project with Python 3.13+ and uv
-- [ ] T005 [P] Initialize recurring-task-service project with Python 3.13+ and uv
-- [ ] T006 [P] Configure pytest 8.3+ for all Python projects
-- [ ] T007 [P] Configure testcontainers-python 4.9+ for integration tests
-- [ ] T008 Create .env.example files for all services with required environment variables
+- [x] T001 Create Phase 5 directory structure (backend/, services/, frontend/, k8s/)
+- [x] T002 Copy Phase 3 backend to Phase 5 and update dependencies (FastAPI 0.115+, Dapr SDK 1.14+)
+- [x] T003 [P] Copy Phase 3 frontend to Phase 5 and update dependencies (Next.js 15+, React 19+)
+- [x] T004 [P] Initialize notification-service project with Python 3.13+ and uv
+- [x] T005 [P] Initialize recurring-task-service project with Python 3.13+ and uv
+- [x] T006 [P] Configure pytest 8.3+ for all Python projects
+- [x] T007 [P] Configure testcontainers-python 4.9+ for integration tests
+- [x] T007a Create docker-compose.test.yaml for integration testing infrastructure (Kafka, PostgreSQL, Dapr)
+- [x] T008 Create .env.example files for all services with required environment variables
 
 ---
 
@@ -46,35 +47,38 @@ This is a web application with microservices:
 
 ### Database Migrations
 
-- [ ] T009 Create Alembic migration: Add priority, tags, due_at, recurrence_id to tasks table
-- [ ] T010 [P] Create Alembic migration: Create task_recurrences table
-- [ ] T011 [P] Create Alembic migration: Create task_reminders table
-- [ ] T012 [P] Create Alembic migration: Create notifications table
-- [ ] T013 Create composite indexes on tasks table (user_id+due_at, user_id+priority)
+- [x] T009 Create Alembic migration: Add priority, tags, due_at, recurrence_id to tasks table
+- [x] T010 [P] Create Alembic migration: Create task_recurrences table
+- [x] T011 [P] Create Alembic migration: Create task_reminders table
+- [x] T012 [P] Create Alembic migration: Create notifications table
+- [x] T012a [P] Create Alembic migration: Create event_log table for idempotency tracking (event_id, event_type, consumer_service, processed_at, expires_at)
+- [x] T013 Create composite indexes on tasks table (user_id+due_at, user_id+priority)
 
 ### Extended Domain Models
 
-- [ ] T014 Update Task model in todo_app/phase_5/backend/src/models/task.py (add priority, tags, due_at, recurrence_id)
-- [ ] T015 [P] Create TaskRecurrence model in todo_app/phase_5/backend/src/models/task_recurrence.py
-- [ ] T016 [P] Create TaskReminder model in todo_app/phase_5/backend/src/models/task_reminder.py
-- [ ] T017 [P] Create Notification model in todo_app/phase_5/backend/src/models/notification.py
-- [ ] T018 [P] Create Priority enum in todo_app/phase_5/backend/src/models/enums.py
-- [ ] T019 [P] Create RecurrencePattern enum in todo_app/phase_5/backend/src/models/enums.py
-- [ ] T020 [P] Create NotificationChannel enum in todo_app/phase_5/backend/src/models/enums.py
-- [ ] T021 [P] Create NotificationStatus enum in todo_app/phase_5/backend/src/models/enums.py
+- [x] T014 Update Task model in todo_app/phase_5/backend/src/models/task.py (add priority, tags, due_at, recurrence_id)
+- [x] T015 [P] Create TaskRecurrence model in todo_app/phase_5/backend/src/models/task_recurrence.py
+- [x] T016 [P] Create TaskReminder model in todo_app/phase_5/backend/src/models/task_reminder.py
+- [x] T017 [P] Update Notification model in todo_app/phase_5/backend/src/models/notification.py (Phase 5 fields)
+- [x] T018 [P] Create Priority enum in todo_app/phase_5/backend/src/models/enums.py
+- [x] T019 [P] Create RecurrencePattern enum in todo_app/phase_5/backend/src/models/enums.py
+- [x] T020 [P] Create NotificationChannel enum in todo_app/phase_5/backend/src/models/enums.py
+- [x] T021 [P] Create NotificationStatus enum in todo_app/phase_5/backend/src/models/enums.py
 
 ### Kafka Setup (Local Development)
 
-- [ ] T022 Create docker-compose.yml for local Kafka (Bitnami Kafka in KRaft mode)
-- [ ] T023 Configure Kafka topics in docker-compose: task-events (3 partitions), reminders (2 partitions), notifications (2 partitions)
+- [x] T022 Create docker-compose.yml for local Kafka (Bitnami Kafka in KRaft mode)
+- [x] T023 Configure Kafka topics in docker-compose: task-events (3 partitions), reminders (2 partitions), notifications (2 partitions)
 
 ### Dapr Component Configurations
 
-- [ ] T024 Create Dapr Pub/Sub component YAML in todo_app/phase_5/k8s/dapr-components/pubsub.yaml (Kafka)
-- [ ] T025 [P] Create Dapr State Store component YAML in todo_app/phase_5/k8s/dapr-components/statestore.yaml (PostgreSQL)
-- [ ] T026 [P] Create Dapr Secrets component YAML in todo_app/phase_5/k8s/dapr-components/secrets.yaml (Kubernetes Secrets)
-- [ ] T027 [P] Create Dapr Bindings component YAML in todo_app/phase_5/k8s/dapr-components/bindings.yaml (Cron for reminders)
-- [ ] T028 Create Dapr configuration YAML in todo_app/phase_5/k8s/dapr-components/configuration.yaml (global settings, mTLS)
+- [x] T024 Create Dapr Pub/Sub component YAML in todo_app/phase_5/k8s/dapr-components/pubsub-kafka.yaml (Kafka)
+- [x] T025 [P] Create Dapr State Store component YAML in todo_app/phase_5/k8s/dapr-components/statestore-postgresql.yaml (PostgreSQL)
+- [x] T026 [P] Create Dapr Secrets component YAML in todo_app/phase_5/k8s/dapr-components/secretstore-kubernetes.yaml (Kubernetes Secrets)
+- [x] T027 [P] Create Dapr Bindings component YAML in todo_app/phase_5/k8s/dapr-components/binding-cron.yaml (Cron for reminders)
+- [x] T028 Create Dapr configuration YAML in todo_app/phase_5/k8s/dapr-components/configuration.yaml (global settings, mTLS)
+- [x] T028a [P] Create Dapr Subscription manifest for notification-service in todo_app/phase_5/k8s/dapr-components/subscription-notification-service.yaml
+- [x] T028b [P] Create Dapr Subscription manifest for recurring-task-service in todo_app/phase_5/k8s/dapr-components/subscription-recurring-task-service.yaml
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -90,39 +94,39 @@ This is a web application with microservices:
 
 ### Event Schema Definitions
 
-- [ ] T029 [P] [US6] Create event schemas module in todo_app/phase_5/backend/src/schemas/event_schemas.py
-- [ ] T030 [P] [US6] Define TaskCreatedEvent Pydantic model with JSON Schema validation
-- [ ] T031 [P] [US6] Define TaskUpdatedEvent Pydantic model
-- [ ] T032 [P] [US6] Define TaskCompletedEvent Pydantic model
-- [ ] T033 [P] [US6] Define TaskDeletedEvent Pydantic model
-- [ ] T034 [P] [US6] Define ReminderDueEvent Pydantic model
-- [ ] T035 [P] [US6] Define NotificationSentEvent Pydantic model
-- [ ] T036 [P] [US6] Define NotificationFailedEvent Pydantic model
+- [x] T029 [P] [US6] Create event schemas module in todo_app/phase_5/backend/src/schemas/event_schemas.py
+- [x] T030 [P] [US6] Define TaskCreatedEvent Pydantic model with JSON Schema validation
+- [x] T031 [P] [US6] Define TaskUpdatedEvent Pydantic model
+- [x] T032 [P] [US6] Define TaskCompletedEvent Pydantic model
+- [x] T033 [P] [US6] Define TaskDeletedEvent Pydantic model
+- [x] T034 [P] [US6] Define ReminderDueEvent Pydantic model
+- [x] T035 [P] [US6] Define NotificationSentEvent Pydantic model
+- [x] T036 [P] [US6] Define NotificationFailedEvent Pydantic model
 
 ### Kafka Service Layer
 
-- [ ] T037 [US6] Implement KafkaService in todo_app/phase_5/backend/src/services/kafka_service.py
-- [ ] T038 [US6] Add publish_event method with event serialization and error handling
-- [ ] T039 [US6] Add event_id generation (UUID) for idempotency
-- [ ] T040 [US6] Add retry logic with exponential backoff for Kafka failures
-- [ ] T041 [US6] Add in-memory buffer for events when Kafka is unavailable (max 1000 events)
+- [x] T037 [US6] Implement KafkaService in todo_app/phase_5/backend/src/services/kafka_service.py
+- [x] T038 [US6] Add publish_event method with event serialization and error handling
+- [x] T039 [US6] Add event_id generation (UUID) for idempotency
+- [x] T040 [US6] Add retry logic with exponential backoff for Kafka failures
+- [x] T041 [US6] Add in-memory buffer for events when Kafka is unavailable (max 1000 events)
 
 ### Backend API Event Publishing Integration
 
-- [ ] T042 [US6] Update TaskService.create() to publish task.created events
-- [ ] T043 [US6] Update TaskService.update() to publish task.updated events
-- [ ] T044 [US6] Update TaskService.complete() to publish task.completed events
-- [ ] T045 [US6] Update TaskService.delete() to publish task.deleted events
+- [x] T042 [US6] Update TaskService.create() to publish task.created events
+- [x] T043 [US6] Update TaskService.update() to publish task.updated events
+- [x] T044 [US6] Update TaskService.complete() to publish task.completed events
+- [x] T045 [US6] Update TaskService.delete() to publish task.deleted events
 
 ### Tests for User Story 6 (TDD)
 
-- [ ] T046 [P] [US6] Contract test: Validate task.created event schema in tests/unit/schemas/test_task_created_event.py
-- [ ] T047 [P] [US6] Contract test: Validate task.completed event schema in tests/unit/schemas/test_task_completed_event.py
-- [ ] T048 [P] [US6] Unit test: KafkaService.publish_event in tests/unit/services/test_kafka_service.py
-- [ ] T049 [P] [US6] Unit test: Event serialization and deserialization
-- [ ] T050 [US6] Integration test: Create task → verify event in Kafka in tests/integration/test_task_events.py (requires testcontainers Kafka)
-- [ ] T051 [US6] Integration test: Complete task → verify event published
-- [ ] T052 [US6] Integration test: Event idempotency (duplicate event_id handling)
+- [x] T046 [P] [US6] Contract test: Validate task.created event schema in tests/unit/schemas/test_task_created_event.py
+- [x] T047 [P] [US6] Contract test: Validate task.completed event schema in tests/unit/schemas/test_task_completed_event.py
+- [x] T048 [P] [US6] Unit test: KafkaService.publish_event in tests/unit/services/test_kafka_service.py
+- [x] T049 [P] [US6] Unit test: Event serialization and deserialization
+- [x] T050 [US6] Integration test: Create task → verify event in Kafka in tests/integration/test_task_events.py (requires testcontainers Kafka)
+- [x] T051 [US6] Integration test: Complete task → verify event published
+- [x] T052 [US6] Integration test: Event idempotency (duplicate event_id handling)
 
 **Checkpoint**: Event-driven architecture ready - microservices can now consume events
 
@@ -138,21 +142,21 @@ This is a web application with microservices:
 
 ### Dapr Pub/Sub Integration (Backend)
 
-- [ ] T053 [US9] Update KafkaService to use Dapr Pub/Sub API in todo_app/phase_5/backend/src/services/kafka_service.py
-- [ ] T054 [US9] Replace direct Kafka client with Dapr SDK publish method
-- [ ] T055 [US9] Configure Dapr app-id for backend in deployment manifests
+- [x] T053 [US9] Update KafkaService to use Dapr Pub/Sub API in todo_app/phase_5/backend/src/services/kafka_service.py
+- [x] T054 [US9] Replace direct Kafka client with Dapr SDK publish method
+- [x] T055 [US9] Configure Dapr app-id for backend in deployment manifests
 
 ### Dapr State Store Integration (Backend)
 
-- [ ] T056 [P] [US9] Create DaprStateService in todo_app/phase_5/backend/src/services/dapr_state_service.py
-- [ ] T057 [P] [US9] Implement save_state and get_state methods using Dapr State API
+- [x] T056 [P] [US9] Create DaprStateService in todo_app/phase_5/backend/src/services/dapr_state_service.py
+- [x] T057 [P] [US9] Implement save_state and get_state methods using Dapr State API
 - [ ] T058 [P] [US9] Update conversation storage to use Dapr State Store instead of direct PostgreSQL
 
 ### Dapr Secrets Integration (All Services)
 
-- [ ] T059 [US9] Create DaprSecretsService in todo_app/phase_5/backend/src/services/dapr_secrets_service.py
-- [ ] T060 [US9] Update config.py to load secrets via Dapr Secrets API
-- [ ] T061 [US9] Update database connection to use Dapr-retrieved credentials
+- [x] T059 [US9] Create DaprSecretsService in todo_app/phase_5/backend/src/services/dapr_secrets_service.py
+- [x] T060 [US9] Update config.py to load secrets via Dapr Secrets API
+- [x] T061 [US9] Update database connection to use Dapr-retrieved credentials
 
 ### Dapr Service Invocation (Frontend to Backend)
 
@@ -179,25 +183,25 @@ This is a web application with microservices:
 
 ### Tests for User Story 1 (TDD) - Write First
 
-- [ ] T069 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_daily in tests/unit/calculators/test_recurrence_calculator.py
-- [ ] T070 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_weekly
-- [ ] T071 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_monthly (edge case: 31st)
-- [ ] T072 [P] [US1] Contract test: POST /tasks with recurrence in tests/contract/test_task_recurrence_api.py
-- [ ] T073 [P] [US1] Integration test: Create recurring task → complete → verify next occurrence in tests/integration/test_recurring_tasks.py
+- [x] T069 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_daily in tests/unit/calculators/test_recurrence_calculator.py
+- [x] T070 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_weekly
+- [x] T071 [P] [US1] Unit test: RecurrenceCalculator.calculate_next_monthly (edge case: 31st)
+- [x] T072 [P] [US1] Contract test: POST /tasks with recurrence in tests/contract/test_task_recurrence_api.py
+- [x] T073 [P] [US1] Integration test: Create recurring task → complete → verify next occurrence in tests/integration/test_recurring_tasks.py
 
 ### Implementation for User Story 1
 
-- [ ] T074 [P] [US1] Create RecurrenceRepository in todo_app/phase_5/backend/src/repositories/recurrence_repository.py
-- [ ] T075 [P] [US1] Implement create_recurrence, get_by_task_id, update_next_due_at methods
-- [ ] T076 [P] [US1] Create RecurrenceCalculator in todo_app/phase_5/backend/src/services/calculators/recurrence_calculator.py
-- [ ] T077 [P] [US1] Implement calculate_next_daily (interval support)
-- [ ] T078 [P] [US1] Implement calculate_next_weekly (days_of_week support)
-- [ ] T079 [P] [US1] Implement calculate_next_monthly (day_of_month support, handle 31st edge case)
-- [ ] T080 [US1] Update TaskService.create to handle recurrence creation in todo_app/phase_5/backend/src/services/task_service.py
-- [ ] T081 [US1] Add RecurrenceService.stop_recurrence method
-- [ ] T082 [US1] Update TaskSchema to include recurrence fields in todo_app/phase_5/backend/src/schemas/task_schemas.py
-- [ ] T083 [US1] Add GET /tasks/{id}/recurrence endpoint in todo_app/phase_5/backend/src/api/routes/tasks.py
-- [ ] T084 [US1] Add DELETE /tasks/{id}/recurrence endpoint to stop recurrence
+- [x] T074 [P] [US1] Create RecurrenceRepository in todo_app/phase_5/backend/src/repositories/recurrence_repository.py
+- [x] T075 [P] [US1] Implement create_recurrence, get_by_task_id, update_next_due_at methods
+- [x] T076 [P] [US1] Create RecurrenceCalculator in todo_app/phase_5/backend/src/services/calculators/recurrence_calculator.py
+- [x] T077 [P] [US1] Implement calculate_next_daily (interval support)
+- [x] T078 [P] [US1] Implement calculate_next_weekly (days_of_week support)
+- [x] T079 [P] [US1] Implement calculate_next_monthly (day_of_month support, handle 31st edge case)
+- [x] T080 [US1] Update TaskService.create to handle recurrence creation in todo_app/phase_5/backend/src/services/task_service.py
+- [x] T081 [US1] Add RecurrenceService.stop_recurrence method
+- [x] T082 [US1] Update TaskSchema to include recurrence fields in todo_app/phase_5/backend/src/schemas.py
+- [x] T083 [US1] Add GET /tasks/{id}/recurrence endpoint in todo_app/phase_5/backend/src/api/routes/tasks.py
+- [x] T084 [US1] Add DELETE /tasks/{id}/recurrence endpoint to stop recurrence
 
 ### Frontend for User Story 1
 
@@ -221,22 +225,22 @@ This is a web application with microservices:
 
 ### Tests for User Story 2 (TDD) - Write First
 
-- [ ] T092 [P] [US2] Unit test: ReminderScheduler.find_due_reminders in tests/unit/services/test_reminder_scheduler.py
-- [ ] T093 [P] [US2] Unit test: ReminderService.create_reminder validation
-- [ ] T094 [P] [US2] Contract test: POST /tasks with due_at and reminders in tests/contract/test_reminders_api.py
-- [ ] T095 [P] [US2] Integration test: Create task with reminder → trigger scheduler → verify reminder.due event
+- [x] T092 [P] [US2] Unit test: ReminderScheduler.find_due_reminders in tests/unit/services/test_reminder_scheduler.py
+- [x] T093 [P] [US2] Unit test: ReminderService.create_reminder validation
+- [x] T094 [P] [US2] Contract test: POST /tasks with due_at and reminders in tests/contract/test_reminders_api.py
+- [x] T095 [P] [US2] Integration test: Create task with reminder → trigger scheduler → verify reminder.due event
 
 ### Implementation for User Story 2
 
-- [ ] T096 [P] [US2] Create ReminderRepository in todo_app/phase_5/backend/src/repositories/reminder_repository.py
-- [ ] T097 [P] [US2] Implement create, find_unsent_reminders, mark_as_sent methods
-- [ ] T098 [P] [US2] Create ReminderScheduler service in todo_app/phase_5/backend/src/services/reminder_scheduler.py
-- [ ] T099 [P] [US2] Implement find_due_reminders method (queries tasks with upcoming due dates)
-- [ ] T100 [P] [US2] Implement publish_reminder_events method (publishes reminder.due events)
-- [ ] T101 [US2] Add Dapr Cron binding to trigger ReminderScheduler every 5 minutes
-- [ ] T102 [US2] Update TaskService to create reminders when task is created with due_at
-- [ ] T103 [US2] Add GET /tasks/{id}/reminders endpoint in todo_app/phase_5/backend/src/api/routes/tasks.py
-- [ ] T104 [US2] Add POST /tasks/{id}/reminders endpoint to add reminder to existing task
+- [x] T096 [P] [US2] Create ReminderRepository in todo_app/phase_5/backend/src/repositories/reminder_repository.py
+- [x] T097 [P] [US2] Implement create, find_unsent_reminders, mark_as_sent methods
+- [x] T098 [P] [US2] Create ReminderScheduler service in todo_app/phase_5/backend/src/services/reminder_scheduler.py
+- [x] T099 [P] [US2] Implement find_due_reminders method (queries tasks with upcoming due dates)
+- [x] T100 [P] [US2] Implement publish_reminder_events method (publishes reminder.due events)
+- [x] T101 [US2] Add Dapr Cron binding to trigger ReminderScheduler every 5 minutes
+- [x] T102 [US2] Update TaskService to create reminders when task is created with due_at
+- [x] T103 [US2] Add GET /tasks/{id}/reminders endpoint in todo_app/phase_5/backend/src/api/routes/tasks.py
+- [x] T104 [US2] Add POST /tasks/{id}/reminders endpoint to add reminder to existing task
 
 ### Frontend for User Story 2
 
@@ -259,26 +263,26 @@ This is a web application with microservices:
 
 ### Tests for User Story 8 (TDD) - Write First
 
-- [ ] T111 [P] [US8] Unit test: RecurrenceHandler.handle_task_completed in tests/unit/handlers/test_recurrence_handler.py
-- [ ] T112 [P] [US8] Unit test: Event idempotency (duplicate event_id rejection)
-- [ ] T113 [P] [US8] Integration test: Publish task.completed → verify next task created in tests/integration/test_recurring_task_service.py
+- [x] T111 [P] [US8] Unit test: RecurrenceHandler.handle_task_completed in tests/unit/handlers/test_recurrence_handler.py
+- [x] T112 [P] [US8] Unit test: Event idempotency (duplicate event_id rejection)
+- [x] T113 [P] [US8] Integration test: Publish task.completed → verify next task created in tests/integration/test_recurring_task_service.py
 
 ### Implementation for User Story 8
 
-- [ ] T114 [P] [US8] Create RecurrenceHandler in todo_app/phase_5/services/recurring-task-service/src/handlers/recurrence_handler.py
-- [ ] T115 [P] [US8] Implement handle_task_completed method (parse event, calculate next due date)
-- [ ] T116 [P] [US8] Implement create_next_occurrence method (calls backend API via Dapr Service Invocation)
-- [ ] T117 [P] [US8] Create EventLogRepository to track processed event_ids for idempotency
-- [ ] T118 [US8] Implement Dapr Pub/Sub consumer in todo_app/phase_5/services/recurring-task-service/src/consumers/task_completed_consumer.py
-- [ ] T119 [US8] Subscribe to task-events topic with filter for task.completed events
-- [ ] T120 [US8] Add error handling and dead letter queue for failed events
-- [ ] T121 [US8] Create main.py FastAPI app with health check endpoint
-- [ ] T122 [US8] Add Prometheus metrics (events_processed, events_failed)
+- [x] T114 [P] [US8] Create RecurrenceHandler in todo_app/phase_5/services/recurring-task-service/src/handlers/recurrence_handler.py
+- [x] T115 [P] [US8] Implement handle_task_completed method (parse event, calculate next due date)
+- [x] T116 [P] [US8] Implement create_next_occurrence method (calls backend API via Dapr Service Invocation)
+- [x] T117 [P] [US8] Create EventLogRepository to track processed event_ids for idempotency
+- [x] T118 [US8] Implement Dapr Pub/Sub consumer in todo_app/phase_5/services/recurring-task-service/src/consumers/task_completed_consumer.py
+- [x] T119 [US8] Subscribe to task-events topic with filter for task.completed events
+- [x] T120 [US8] Add error handling and dead letter queue for failed events
+- [x] T121 [US8] Create main.py FastAPI app with health check endpoint
+- [x] T122 [US8] Add Prometheus metrics (events_processed, events_failed)
 
 ### Deployment for User Story 8
 
-- [ ] T123 [P] [US8] Create Dockerfile for recurring-task-service (multi-stage build)
-- [ ] T124 [P] [US8] Create Helm chart subchart in todo_app/phase_5/k8s/helm/todo-app/charts/recurring-task-service/
+- [x] T123 [P] [US8] Create Dockerfile for recurring-task-service (multi-stage build)
+- [x] T124 [P] [US8] Create Helm chart subchart in todo_app/phase_5/k8s/helm/todo-app/charts/recurring-task-service/
 
 **Checkpoint**: Recurring task microservice operational - next occurrences auto-generated
 
@@ -292,30 +296,30 @@ This is a web application with microservices:
 
 ### Tests for User Story 7 (TDD) - Write First
 
-- [ ] T125 [P] [US7] Unit test: EmailHandler.send_email in tests/unit/handlers/test_email_handler.py
-- [ ] T126 [P] [US7] Unit test: PushHandler.send_push (mock FCM)
-- [ ] T127 [P] [US7] Unit test: NotificationHandler.handle_reminder_due
-- [ ] T128 [P] [US7] Integration test: Publish reminder.due → verify email sent (mock SMTP) in tests/integration/test_notification_service.py
+- [x] T125 [P] [US7] Unit test: EmailHandler.send_email in tests/unit/handlers/test_email_handler.py
+- [x] T126 [P] [US7] Unit test: PushHandler.send_push (mock FCM)
+- [x] T127 [P] [US7] Unit test: NotificationHandler.handle_reminder_due
+- [x] T128 [P] [US7] Integration test: Publish reminder.due → verify email sent (mock SMTP) in tests/integration/test_notification_service.py
 
 ### Implementation for User Story 7
 
-- [ ] T129 [P] [US7] Create EmailHandler in todo_app/phase_5/services/notification-service/src/handlers/email_handler.py
-- [ ] T130 [P] [US7] Implement send_email with SMTP integration
-- [ ] T131 [P] [US7] Create PushHandler in todo_app/phase_5/services/notification-service/src/handlers/push_handler.py
-- [ ] T132 [P] [US7] Implement send_push with Firebase Cloud Messaging integration
-- [ ] T133 [P] [US7] Create NotificationRepository to log delivery status
-- [ ] T134 [US7] Implement NotificationHandler.handle_reminder_due in todo_app/phase_5/services/notification-service/src/handlers/notification_handler.py
-- [ ] T135 [US7] Publish notification.sent or notification.failed events after delivery attempt
-- [ ] T136 [US7] Implement Dapr Pub/Sub consumer in todo_app/phase_5/services/notification-service/src/consumers/reminder_consumer.py
-- [ ] T137 [US7] Subscribe to reminders topic
-- [ ] T138 [US7] Add retry logic with exponential backoff for failed notifications
-- [ ] T139 [US7] Create main.py FastAPI app with health check endpoint
-- [ ] T140 [US7] Add Prometheus metrics (notifications_sent, notifications_failed)
+- [x] T129 [P] [US7] Create EmailHandler in todo_app/phase_5/services/notification-service/src/handlers/email_handler.py
+- [x] T130 [P] [US7] Implement send_email with SMTP integration
+- [x] T131 [P] [US7] Create PushHandler in todo_app/phase_5/services/notification-service/src/handlers/push_handler.py
+- [x] T132 [P] [US7] Implement send_push with Firebase Cloud Messaging integration
+- [x] T133 [P] [US7] Create NotificationRepository to log delivery status
+- [x] T134 [US7] Implement NotificationHandler.handle_reminder_due in todo_app/phase_5/services/notification-service/src/handlers/notification_handler.py
+- [x] T135 [US7] Publish notification.sent or notification.failed events after delivery attempt
+- [x] T136 [US7] Implement Dapr Pub/Sub consumer in todo_app/phase_5/services/notification-service/src/consumers/reminder_consumer.py
+- [x] T137 [US7] Subscribe to reminders topic
+- [x] T138 [US7] Add retry logic with exponential backoff for failed notifications
+- [x] T139 [US7] Create main.py FastAPI app with health check endpoint
+- [x] T140 [US7] Add Prometheus metrics (notifications_sent, notifications_failed)
 
 ### Deployment for User Story 7
 
-- [ ] T141 [P] [US7] Create Dockerfile for notification-service (multi-stage build)
-- [ ] T142 [P] [US7] Create Helm chart subchart in todo_app/phase_5/k8s/helm/todo-app/charts/notification-service/
+- [x] T141 [P] [US7] Create Dockerfile for notification-service (multi-stage build)
+- [x] T142 [P] [US7] Create Helm chart subchart in todo_app/phase_5/k8s/helm/todo-app/charts/notification-service/
 
 **Checkpoint**: Notification microservice operational - reminders delivered reliably
 
@@ -513,14 +517,14 @@ This is a web application with microservices:
 
 ### GitHub Actions Workflow
 
-- [ ] T226 [US12] Create .github/workflows/ci-cd.yml workflow file
-- [ ] T227 [US12] Add test stage (run pytest for all Python projects)
-- [ ] T228 [US12] Add build stage (build Docker images for all services)
-- [ ] T229 [US12] Add push stage (push to GHCR with commit SHA tag)
-- [ ] T230 [US12] Add deploy-staging stage (Helm upgrade to staging cluster)
-- [ ] T231 [US12] Add health check stage (verify pods healthy)
-- [ ] T232 [US12] Add deploy-production stage with manual approval gate
-- [ ] T233 [US12] Add rollback on failure logic
+- [x] T226 [US12] Create .github/workflows/phase5-ci-cd.yml workflow file
+- [x] T227 [US12] Add test stage (run pytest for all Python projects)
+- [x] T228 [US12] Add build stage (build Docker images for all services)
+- [x] T229 [US12] Add push stage (push to GHCR with commit SHA tag)
+- [x] T230 [US12] Add deploy-staging stage (Helm upgrade to staging cluster)
+- [x] T231 [US12] Add health check stage (verify pods healthy)
+- [x] T232 [US12] Add deploy-production stage with manual approval gate
+- [x] T233 [US12] Add rollback on failure logic
 
 ### Environment Configuration
 
@@ -596,6 +600,7 @@ This is a web application with microservices:
 - [ ] T264 [P] Create DEPLOYMENT.md with Minikube and cloud deployment instructions
 - [ ] T265 [P] Create MONITORING.md with Grafana dashboard screenshots
 - [ ] T266 [P] Update API documentation with new endpoints
+- [x] T266a [P] Create service-communication-matrix.md documenting all inter-service communication patterns, error handling, timeouts, and retry policies
 - [ ] T267 [P] Create TROUBLESHOOTING.md with common issues and solutions
 
 ### Security Hardening

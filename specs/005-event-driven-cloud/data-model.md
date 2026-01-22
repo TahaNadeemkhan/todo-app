@@ -463,6 +463,95 @@ class Notification(SQLModel, table=True):
 
 ---
 
+### EventLog (NEW - For Idempotency)
+
+**Purpose**: Track processed events to ensure exactly-once processing and prevent duplicate operations.
+
+**SQLModel Definition**:
+```python
+class EventLog(SQLModel, table=True):
+    """Event processing log for idempotency."""
+    __tablename__ = "event_log"
+
+    event_id: str = Field(primary_key=True, max_length=100)  # UUID from event
+    event_type: str = Field(max_length=50, index=True)  # e.g., "task.completed.v1"
+    consumer_service: str = Field(max_length=50)  # Which service processed it
+    processed_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    data: str = Field(default="{}")  # JSON snapshot of event data
+    status: str = Field(default="processed", max_length=20)  # processed | failed
+    error: Optional[str] = Field(default=None, max_length=500)
+
+    # Retention policy metadata
+    expires_at: datetime = Field(default=None)  # Auto-cleanup after 30 days
+```
+
+**Constraints**:
+- `event_id`: Primary key, ensures uniqueness
+- `event_type`: For analytics and debugging
+- `consumer_service`: Track which microservice processed the event
+- `expires_at`: Set to `processed_at + 30 days` for automatic cleanup
+
+**Indexes**:
+- `event_id` (primary key - unique)
+- `event_type` (for monitoring)
+- `processed_at` (for cleanup queries)
+- `expires_at` (for TTL cleanup job)
+
+**Business Rules**:
+1. **Before processing any event**: Check if `event_id` exists in EventLog
+2. **If exists**: Skip processing (idempotent - already handled)
+3. **If not exists**: Process event, then insert EventLog record
+4. **Retry logic**: If status=failed, allow retry with exponential backoff
+5. **Cleanup**: Daily job deletes records where `expires_at < NOW()`
+
+**Usage Example**:
+```python
+async def process_task_completed_event(event: dict):
+    """Process task completion event with idempotency."""
+    event_id = event["event_id"]
+
+    # Check if already processed
+    existing = db.query(EventLog).filter(EventLog.event_id == event_id).first()
+    if existing:
+        logger.info(f"Event {event_id} already processed, skipping")
+        return
+
+    try:
+        # Process event: create next recurring task
+        create_next_recurring_task(event["data"])
+
+        # Log successful processing
+        db.add(EventLog(
+            event_id=event_id,
+            event_type=event["event_type"],
+            consumer_service="recurring-task-service",
+            data=json.dumps(event["data"]),
+            status="processed",
+            expires_at=datetime.utcnow() + timedelta(days=30)
+        ))
+        db.commit()
+    except Exception as e:
+        # Log failed processing
+        db.add(EventLog(
+            event_id=event_id,
+            event_type=event["event_type"],
+            consumer_service="recurring-task-service",
+            data=json.dumps(event["data"]),
+            status="failed",
+            error=str(e),
+            expires_at=datetime.utcnow() + timedelta(days=30)
+        ))
+        db.commit()
+        raise
+```
+
+**Data Retention**:
+- Keep processed events for 30 days (compliance/debugging)
+- Cleanup query: `DELETE FROM event_log WHERE expires_at < NOW()`
+- Run cleanup daily via cron job or Kubernetes CronJob
+
+---
+
 ## Migration Plan
 
 ### Alembic Migrations

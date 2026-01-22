@@ -1,0 +1,649 @@
+name: Phase 5 - Event-Driven Cloud CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - 'todo_app/phase_5/**'
+      - '.github/workflows/phase5-ci-cd.yaml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'todo_app/phase_5/**'
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository }}/phase5-backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/phase5-frontend
+  NOTIFICATION_SERVICE_IMAGE_NAME: ${{ github.repository }}/phase5-notification-service
+  RECURRING_TASK_SERVICE_IMAGE_NAME: ${{ github.repository }}/phase5-recurring-task-service
+
+jobs:
+  # ============================================================================
+  # Backend Service - Lint, Test, Build
+  # ============================================================================
+  backend-lint-and-test:
+    name: Backend - Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./todo_app/phase_5/backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: './todo_app/phase_5/backend/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff mypy
+
+      - name: Run Ruff linter
+        run: ruff check src/ tests/
+
+      - name: Run MyPy type checker
+        run: mypy src/
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=test-results/junit.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./todo_app/phase_5/backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: ./todo_app/phase_5/backend/test-results/
+
+  # ============================================================================
+  # Backend Service - Docker Build & Push
+  # ============================================================================
+  backend-build-and-push:
+    name: Backend - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: backend-lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app/phase_5/backend
+          file: ./todo_app/phase_5/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ============================================================================
+  # Frontend - Lint, Test, Build
+  # ============================================================================
+  frontend-lint-and-test:
+    name: Frontend - Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./todo_app/phase_5/frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './todo_app/phase_5/frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm test -- --coverage
+        env:
+          CI: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./todo_app/phase_5/frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: ./todo_app/phase_5/frontend/.next
+
+  # ============================================================================
+  # Frontend - Docker Build & Push
+  # ============================================================================
+  frontend-build-and-push:
+    name: Frontend - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: frontend-lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app/phase_5/frontend
+          file: ./todo_app/phase_5/frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.API_URL }}
+
+  # ============================================================================
+  # Notification Service - Lint, Test, Build
+  # ============================================================================
+  notification-service-lint-and-test:
+    name: Notification Service - Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./todo_app/phase_5/services/notification
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff mypy
+
+      - name: Run Ruff linter
+        run: ruff check src/ tests/
+
+      - name: Run MyPy type checker
+        run: mypy src/
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./todo_app/phase_5/services/notification/coverage.xml
+          flags: notification-service
+          name: notification-service-coverage
+
+  # ============================================================================
+  # Notification Service - Docker Build & Push
+  # ============================================================================
+  notification-service-build-and-push:
+    name: Notification Service - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: notification-service-lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NOTIFICATION_SERVICE_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app/phase_5/services/notification
+          file: ./todo_app/phase_5/services/notification/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # Recurring Task Service - Lint, Test, Build
+  # ============================================================================
+  recurring-task-service-lint-and-test:
+    name: Recurring Task Service - Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./todo_app/phase_5/services/recurring-task
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff mypy
+
+      - name: Run Ruff linter
+        run: ruff check src/ tests/
+
+      - name: Run MyPy type checker
+        run: mypy src/
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./todo_app/phase_5/services/recurring-task/coverage.xml
+          flags: recurring-task-service
+          name: recurring-task-service-coverage
+
+  # ============================================================================
+  # Recurring Task Service - Docker Build & Push
+  # ============================================================================
+  recurring-task-service-build-and-push:
+    name: Recurring Task Service - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: recurring-task-service-lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.RECURRING_TASK_SERVICE_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app/phase_5/services/recurring-task
+          file: ./todo_app/phase_5/services/recurring-task/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # Integration Tests (Requires Docker Compose)
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs:
+      - backend-lint-and-test
+      - notification-service-lint-and-test
+      - recurring-task-service-lint-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: docker compose version
+
+      - name: Start test infrastructure (Kafka, PostgreSQL)
+        run: |
+          cd todo_app/phase_5
+          docker compose -f docker-compose.test.yaml up -d
+          sleep 30  # Wait for services to be ready
+
+      - name: Run integration tests
+        run: |
+          cd todo_app/phase_5/backend
+          pytest tests/integration/ -v
+
+      - name: Stop test infrastructure
+        if: always()
+        run: |
+          cd todo_app/phase_5
+          docker compose -f docker-compose.test.yaml down -v
+
+  # ============================================================================
+  # Helm Chart Validation & Deployment
+  # ============================================================================
+  helm-validate-and-deploy:
+    name: Helm - Validate & Deploy
+    runs-on: ubuntu-latest
+    needs:
+      - backend-build-and-push
+      - frontend-build-and-push
+      - notification-service-build-and-push
+      - recurring-task-service-build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+
+      - name: Lint Helm chart
+        run: |
+          cd todo_app/phase_5/k8s/helm
+          helm lint todo-app/
+
+      - name: Validate Helm chart
+        run: |
+          cd todo_app/phase_5/k8s/helm
+          helm template todo-app \
+            --values todo-app/values.yaml \
+            --values todo-app/values-production.yaml \
+            --debug
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.29.0'
+
+      - name: Configure kubectl context (Production)
+        run: |
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+          kubectl config current-context
+
+      - name: Deploy to Production (GKE/AKS/DOKS)
+        run: |
+          export KUBECONFIG=kubeconfig.yaml
+          cd todo_app/phase_5/k8s/helm
+
+          helm upgrade --install todo-app ./todo-app \
+            --namespace default \
+            --create-namespace \
+            --values todo-app/values.yaml \
+            --values todo-app/values-production.yaml \
+            --set backend.image.tag=${{ github.sha }} \
+            --set frontend.image.tag=${{ github.sha }} \
+            --set notificationService.image.tag=${{ github.sha }} \
+            --set recurringTaskService.image.tag=${{ github.sha }} \
+            --wait \
+            --timeout 10m
+
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=kubeconfig.yaml
+          kubectl get pods -n default
+          kubectl get services -n default
+          kubectl get ingress -n default
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  security-scan:
+    name: Security Scanning (Trivy)
+    runs-on: ubuntu-latest
+    needs:
+      - backend-build-and-push
+      - frontend-build-and-push
+      - notification-service-build-and-push
+      - recurring-task-service-build-and-push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (Backend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'backend-trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'backend-trivy-results.sarif'
+          category: 'backend'
+
+      - name: Run Trivy vulnerability scanner (Frontend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'frontend-trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'frontend-trivy-results.sarif'
+          category: 'frontend'
+
+  # ============================================================================
+  # Smoke Tests (Post-Deployment)
+  # ============================================================================
+  smoke-tests:
+    name: Smoke Tests (Production)
+    runs-on: ubuntu-latest
+    needs: helm-validate-and-deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment to stabilize
+        run: sleep 60
+
+      - name: Run smoke tests
+        run: |
+          # Test Backend API health
+          curl -f https://api.todo-app.example.com/health || exit 1
+
+          # Test Frontend accessibility
+          curl -f https://todo-app.example.com || exit 1
+
+          # Test authenticated endpoint (create task)
+          # (requires valid JWT token from secrets)
+          curl -f -X POST https://api.todo-app.example.com/api/v1/users/test/tasks \
+            -H "Authorization: Bearer ${{ secrets.TEST_JWT_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"title":"Smoke Test Task"}' || exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: danger
+          SLACK_MESSAGE: 'Phase 5 Production smoke tests failed!'
+          SLACK_TITLE: Deployment Alert
+          SLACK_USERNAME: GitHub Actions
+
+  # ============================================================================
+  # Rollback on Failure
+  # ============================================================================
+  rollback-on-failure:
+    name: Rollback on Smoke Test Failure
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubectl context
+        run: |
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+
+      - name: Rollback Helm release
+        run: |
+          export KUBECONFIG=kubeconfig.yaml
+          helm rollback todo-app --namespace default --wait
+
+      - name: Verify rollback
+        run: |
+          export KUBECONFIG=kubeconfig.yaml
+          kubectl get pods -n default
+          kubectl describe deployment backend-api -n default
+
+      - name: Notify rollback
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: warning
+          SLACK_MESSAGE: 'Phase 5 Production deployment rolled back due to smoke test failures'
+          SLACK_TITLE: Rollback Alert
+          SLACK_USERNAME: GitHub Actions

@@ -16,9 +16,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TagInput } from "@/components/ui/TagInput";
 import { toast } from "sonner";
 import { Task } from "@/lib/types";
-import { Plus, ChevronDown, ChevronRight, Bell } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, Bell, Tag as TagIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AddTaskDialogProps {
@@ -31,6 +32,7 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [tags, setTags] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +72,7 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
         title,
         description: description || undefined,
         priority,
+        tags,
         due_date: dueDateTimeISO,
         notifications_enabled: notificationsEnabled,
         notify_email: notificationsEnabled && notifyEmail ? notifyEmail : undefined,
@@ -79,6 +82,7 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
       setTitle("");
       setDescription("");
       setPriority("medium");
+      setTags([]);
       setDueDate("");
       setDueTime("");
       setNotificationsEnabled(false);
@@ -142,6 +146,12 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
                 <option value="high" className="bg-white dark:bg-zinc-800">High</option>
               </select>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tags" className="flex items-center gap-2">
+                <TagIcon className="h-3.5 w-3.5" /> Tags
+              </Label>
+              <TagInput tags={tags} onChange={setTags} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="dueDate">Due Date</Label>
@@ -199,8 +209,17 @@ export function AddTaskDialog({ onTaskAdded }: AddTaskDialogProps) {
                           id="notifications"
                           checked={notificationsEnabled}
                           onCheckedChange={(checked) => {
-                            setNotificationsEnabled(checked === true);
-                            if (!checked) setNotifyEmail("");
+                            const isChecked = checked === true;
+                            setNotificationsEnabled(isChecked);
+                            
+                            if (isChecked) {
+                              // Auto-fill email from session
+                              if (session?.user?.email) {
+                                setNotifyEmail(session.user.email);
+                              }
+                            } else {
+                              setNotifyEmail("");
+                            }
                           }}
                         />
                         <Label
