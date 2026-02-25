@@ -184,6 +184,49 @@ As a user, I want to speak my tasks and commands into the chatbot using voice in
 
 ---
 
+### User Story 9 - Task Organization with Tags (Priority: P2)
+
+As a user, I want to assign tags to my tasks (e.g., #Work, #Personal, #Urgent), so I can categorize and filter them easily.
+
+**Example interactions**:
+- User: "Add task: Submit report #work #urgent"
+- User: "Show my #finance tasks"
+- User: "Add tag #important to task 3"
+
+**Why this priority**: Essential for organizing growing task lists and enabling smarter AI filtering.
+
+**Independent Test**: Create a task with tags via chat, verify tags are saved. Filter list by tag via chat.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user says "Add task: Buy milk #personal", **Then** the task is created with title "Buy milk" and associated with the "personal" tag.
+2. **Given** the user says "Show #work tasks", **When** they have tasks tagged "work", **Then** only those tasks are listed.
+3. **Given** the user says "Add #urgent tag to the grocery task", **Then** the "urgent" tag is added to the existing task.
+4. **Given** a task has multiple tags, **When** listed, **Then** all tags are displayed.
+5. **Given** the user creates a new tag via chat (implicit creation), **Then** the tag is created in the database if it doesn't exist.
+
+---
+
+### User Story 10 - Rich Notes (Markdown Support) (Priority: P2)
+
+As a user, I want to add detailed notes to my tasks using rich text formatting (lists, bold, links), so I can capture comprehensive information.
+
+**Example interactions**:
+- User: "Update task description to include a checklist of items"
+- User: "Add a note with the meeting link: https://zoom.us/..."
+
+**Why this priority**: "Description" field is currently plain text. Rich notes allow for sub-tasks, checklists, and better documentation, crucial for business use cases.
+
+**Independent Test**: Update a task with Markdown content via chat/UI, verify it renders correctly in the frontend.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user pastes a Markdown checklist into the task description, **When** viewed in the UI, **Then** it renders as a formatted checklist.
+2. **Given** the user asks AI to "Add a checklist for shopping: Milk, Eggs, Bread", **Then** the AI updates the task description with Markdown checkboxes (`- [ ] Milk`).
+3. **Given** the user asks AI to "Summarize the meeting notes in the task", **Then** the AI formats the summary with headers and bullet points in the description.
+
+---
+
 ### Edge Cases
 
 - **Empty task title**: What happens when user says "Add task" without providing any task description? → Chatbot should ask "What task would you like to add?"
@@ -244,6 +287,14 @@ As a user, I want to speak my tasks and commands into the chatbot using voice in
 - **FR-031**: System MUST support multilingual conversations in both English and Urdu (Roman/Script) based on user's language preference detected from their messages
 - **FR-032**: System MUST trigger the existing Phase 2 notification service to send an email alert to the user upon successful task creation via the chatbot
 - **FR-033**: Frontend UI MUST provide a microphone button that uses the browser's Web Speech API to convert user voice input into text before sending it to the chat endpoint
+- **FR-034**: System MUST support a many-to-many relationship between `Tasks` and `Tags`
+- **FR-035**: System MUST allow creating new tags dynamically (implicit creation)
+- **FR-036**: System MUST ensure tag names are unique per user (or global, depending on design - per user preferred)
+- **FR-037**: MCP `add_task` tool MUST accept an optional `tags` list parameter
+- **FR-038**: MCP `update_task` tool MUST accept `tags_to_add` and `tags_to_remove` parameters
+- **FR-039**: MCP `list_tasks` tool MUST accept an optional `tags` filter parameter
+- **FR-040**: Task `description` field MUST support Markdown storage and rendering (Frontend)
+- **FR-041**: AI Agent system prompt MUST be updated to understand hashtag syntax (`#tag`) as a request to add tags
 
 ### Key Entities *(include if feature involves data)*
 
@@ -264,6 +315,17 @@ As a user, I want to speak my tasks and commands into the chatbot using voice in
   - Enhanced to support natural language creation from chat messages
   - Title and description fields populated from AI extraction
   - Managed through MCP tools rather than direct API access
+  - **New Relationship**: Many-to-Many with Tags
+
+- **Tag** (New): Represents a label for tasks
+  - `id`: Unique identifier
+  - `name`: Tag name (e.g., "work")
+  - `user_id`: Owner of the tag
+  - `color`: Optional visual color
+
+- **TaskTagLink** (New): Join table for Task-Tag relationship
+  - `task_id`: Foreign key to Task
+  - `tag_id`: Foreign key to Tag
 
 ## Success Criteria *(mandatory)*
 
@@ -388,6 +450,8 @@ frontend/tests/
 - Test rejects request with mismatched user_id
 - Test handles optional description parameter
 - Test returns correct JSON structure
+- **Test creates task with tags (new)**
+- **Test creates tags if they don't exist (new)**
 
 **For Chat Endpoint**:
 - Test creates new conversation when conversation_id is null
@@ -408,6 +472,7 @@ frontend/tests/
 - Test agent calls list_tasks tool when user says "Show my tasks"
 - Test agent asks clarification when intent is ambiguous
 - Test agent maintains context across multiple turns
+- **Test agent extracts hashtags from user message (new)**
 
 **For Voice Input (Frontend)**:
 - Test microphone button renders and is clickable

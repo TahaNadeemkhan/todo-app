@@ -1,0 +1,181 @@
+# Docker Compose for Phase 5 Local Development
+# Based on Hackathon II Document - Phase V Requirements
+# Provides Kafka (Bitnami KRaft mode), PostgreSQL, and optional services
+
+version: '3.9'
+
+services:
+  # ==========================================================================
+  # PostgreSQL Database (Neon-compatible local setup)
+  # ==========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: phase5-postgres
+    environment:
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: todo_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo_user -d todo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - phase5-network
+
+  # ==========================================================================
+  # Kafka (Bitnami - KRaft mode, no Zookeeper)
+  # ==========================================================================
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: phase5-kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"  # External access
+    environment:
+      # KRaft mode configuration (no Zookeeper)
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # Listeners
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Topic auto-creation
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_NUM_PARTITIONS: 3
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 1
+
+      # Retention
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168  # 7 days
+      KAFKA_CFG_LOG_SEGMENT_BYTES: 1073741824  # 1GB
+
+      # Performance
+      KAFKA_CFG_COMPRESSION_TYPE: snappy
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - phase5-network
+
+  # ==========================================================================
+  # Kafka Topic Creation (runs once after Kafka is healthy)
+  # ==========================================================================
+  kafka-init:
+    image: bitnami/kafka:3.6
+    container_name: phase5-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "Creating Kafka topics for Phase 5..."
+
+        # Topic: task-events (3 partitions as per spec)
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic task-events \
+          --partitions 3 \
+          --replication-factor 1 \
+          --config retention.ms=604800000 \
+          --config compression.type=snappy \
+          --config min.insync.replicas=1
+
+        # Topic: reminders (2 partitions as per spec)
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic reminders \
+          --partitions 2 \
+          --replication-factor 1 \
+          --config retention.ms=259200000 \
+          --config compression.type=snappy \
+          --config min.insync.replicas=1
+
+        # Topic: notifications (2 partitions as per spec)
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic notifications \
+          --partitions 2 \
+          --replication-factor 1 \
+          --config retention.ms=604800000 \
+          --config compression.type=snappy \
+          --config min.insync.replicas=1
+
+        # Dead letter queues
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic task-events-dlq \
+          --partitions 1 \
+          --replication-factor 1
+
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic reminders-dlq \
+          --partitions 1 \
+          --replication-factor 1
+
+        echo "Topics created successfully!"
+        kafka-topics.sh --bootstrap-server kafka:9092 --list
+    networks:
+      - phase5-network
+    restart: "no"
+
+  # ==========================================================================
+  # Optional: Kafka UI for monitoring (accessible at http://localhost:8080)
+  # ==========================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: phase5-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: phase5-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - phase5-network
+    profiles:
+      - ui  # Only start with: docker compose --profile ui up
+
+  # ==========================================================================
+  # Optional: PostgreSQL Admin (pgAdmin)
+  # ==========================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: phase5-pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@todo-app.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - phase5-network
+    profiles:
+      - admin  # Only start with: docker compose --profile admin up
+
+volumes:
+  postgres-data:
+  kafka-data:
+  pgadmin-data:
+
+networks:
+  phase5-network:
+    name: phase5-network
+    driver: bridge

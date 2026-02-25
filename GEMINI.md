@@ -208,3 +208,9 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.13+ (backend/microservices), Node.js 20+ (frontend) (005-event-driven-cloud)
+
+## Recent Changes
+- 005-event-driven-cloud: Added Python 3.13+ (backend/microservices), Node.js 20+ (frontend)

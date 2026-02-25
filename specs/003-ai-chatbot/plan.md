@@ -1141,6 +1141,136 @@ This plan completes Phase 1 (Design & Contracts). The next command is `/sp.tasks
 - ⏳ research.md (Phase 0 - to be generated)
 - ⏳ data-model.md (Phase 1 - to be generated)
 - ⏳ contracts/ (Phase 1 - to be generated)
-- ⏳ quickstart.md (Phase 1 - to be generated)
+- ⏳ quickstart.md (Phase 1 - to a be generated)
 
 **Constitution Re-Check** (Post-Design): PASS - all architectural decisions align with principles.
+
+---
+---
+
+## Addendum: Implementation Plan for Tags & Rich Notes
+
+**Date**: 2026-01-05 | **Spec Addendum**: [spec.md](./spec.md) (User Stories 9 & 10)
+
+This addendum details the plan to implement Task Tags and Rich Notes (Markdown) functionality, enhancing the core task model.
+
+### 1. Backend Changes
+
+#### 1.1. Database Schema (SQLModel)
+
+We will introduce two new models for the many-to-many relationship and update the `Task` model.
+
+**New Model: `Tag`**
+File: `backend/src/models/tag.py`
+```python
+import uuid
+from typing import List, Optional
+from sqlmodel import Field, SQLModel, Relationship
+
+class Tag(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(index=True, unique=True) # Initially global, can be scoped to user later
+    user_id: str = Field(index=True)
+    color: Optional[str] = Field(default=None)
+    tasks: List["Task"] = Relationship(back_populates="tags", link_model=TaskTagLink)
+```
+
+**New Model: `TaskTagLink` (Join Table)**
+File: `backend/src/models/task_tag_link.py`
+```python
+from sqlmodel import Field, SQLModel
+import uuid
+
+class TaskTagLink(SQLModel, table=True):
+    task_id: Optional[uuid.UUID] = Field(default=None, foreign_key="tasks.id", primary_key=True)
+    tag_id: Optional[uuid.UUID] = Field(default=None, foreign_key="tags.id", primary_key=True)
+```
+
+**Update `Task` Model**
+File: `backend/src/models/task.py` (Update)
+- Add the `tags` relationship.
+- Ensure `description` can handle larger text for Markdown.
+
+```python
+# In models/task.py
+from typing import List
+from sqlmodel import Relationship
+
+class Task(SQLModel, table=True):
+    # ... existing fields
+    tags: List["Tag"] = Relationship(back_populates="tasks", link_model=TaskTagLink)
+    # Ensure description has a TEXT type in the DB via `sa_column=Column(Text)` if needed
+```
+
+#### 1.2. Task Repository (`task_repository.py`)
+
+The repository will be updated to manage tags.
+
+- **`create()`**:
+    - Accept an optional `tags: List[str]` argument.
+    - For each tag string, find it in the `tags` table or create it (`find_or_create`).
+    - Associate the found/created tags with the new task.
+- **`update()`**:
+    - Accept `tags_to_add: List[str]` and `tags_to_remove: List[str]`.
+    - Handle adding and removing associations in the `tasktaglinks` table.
+- **`list_by_user()`**:
+    - Accept an optional `tags: List[str]` filter.
+    - Modify the query to join with `tasktaglinks` and `tags` to filter tasks.
+
+#### 1.3. MCP Tools (`mcp_server/tools/`)
+
+The tool schemas and logic will be updated.
+
+- **`add_task`**:
+    - Add `tags: Optional[List[str]] = None` to the function signature and schema.
+    - Pass the tags to the `task_repository.create()` method.
+- **`update_task`**:
+    - Add `tags_to_add: Optional[List[str]] = None` and `tags_to_remove: Optional[List[str]] = None`.
+    - Pass them to the `task_repository.update()` method.
+- **`list_tasks`**:
+    - Add `tags: Optional[List[str]] = None` to filter the task list.
+- **System Prompt**: Update the agent's system prompt to inform it about the new `tags` parameter and how to use it, especially with hashtags (`#tag`).
+
+### 2. Frontend Changes
+
+#### 2.1. UI Components
+
+- **`TagInput` Component**:
+    - Create a new component for selecting and creating tags.
+    - It should support autocompletion for existing tags.
+    - It should allow creating new tags on the fly.
+    - Use a library like `shadcn-multi-select` or build a custom one using `cmdk`.
+- **`TagBadge` Component**:
+    - A simple component to display a tag with a colored badge.
+- **`MarkdownRenderer` Component**:
+    - Use a library like `react-markdown` with plugins for GitHub Flavored Markdown (`remark-gfm`).
+    - This component will be used to render the task `description` wherever it's displayed (e.g., in a task detail view).
+
+#### 2.2. View Modifications
+
+- **`add-task-dialog.tsx`**:
+    - Integrate the new `TagInput` component to allow users to add tags when creating a task.
+- **`task-item.tsx`**:
+    - Use the `TagBadge` component to display the tags associated with each task in the list.
+- **Task Detail View** (if it exists, or create one):
+    - Use the `MarkdownRenderer` to display the task's `description` (notes).
+
+### 3. ADR-006: Many-to-Many Relationship for Tags
+
+**Context**: We need to associate tasks with multiple tags, and a single tag can be used across multiple tasks.
+
+**Decision**: Implement a Many-to-Many relationship using a third join table (`TaskTagLink`).
+
+**Rationale**:
+- **Scalability**: A many-to-many relationship is the standard, scalable way to model this. It avoids data duplication (like storing tags as a comma-separated string) and allows for efficient querying.
+- **Extensibility**: It allows `Tag` to become a rich entity in the future (e.g., with its own color, description, etc.) without changing the `Task` model.
+- **SQLModel Support**: `SQLModel` provides a clear and idiomatic way to define many-to-many relationships using `Relationship` and `link_model`.
+
+**Consequences**:
+- Requires an additional table in the database (`tasktaglinks`).
+- Database queries for tasks with tags will be slightly more complex, involving a `JOIN`.
+- Requires an Alembic migration script to create the new tables and relationships.
+
+**Alternatives Considered**:
+- **JSON Field/Array in `Task` model**: Storing tags as an array in a JSON field. Rejected because it makes querying/filtering by tag inefficient and non-standard across different SQL databases.
+- **Comma-Separated String**: Rejected for being an anti-pattern that is difficult to query, maintain, and scale.

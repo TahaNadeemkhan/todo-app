@@ -1,110 +1,100 @@
-# Todo App
+# Phase 4: Local Kubernetes Deployment (v1.0.4)
 
-A multi-phase project evolving from a CLI to a Cloud-Native Web App with AI capabilities.
+This phase focuses on containerizing the application and deploying it to a local Kubernetes cluster using Minikube and Helm. It also introduces a major schema migration from integer IDs to UUIDs.
 
----
+## Key Changes in Phase 4
 
-## Phase 3: AI-Powered Chatbot (Current)
+- **UUID Migration:** Task IDs have been migrated from `int` to `str` (UUID v4) to support distributed systems and prevent ID collisions.
+- **Kubernetes Native:** Full manifests and Helm charts for deploying Frontend and Backend services.
+- **Neon Postgres Integration:** Seamless connection to Neon Serverless Postgres with `sslmode=require`.
+- **CORS Handling:** Updated backend to support cross-origin requests from the local frontend.
 
-An intelligent AI assistant integrated into the web app that lets you manage tasks using natural language.
+## Prerequisites
 
-### ✨ Features
-- **AI Task Management:** Create, update, and manage tasks through natural conversation
-- **Voice Input:** Speak to create tasks hands-free
-- **Smart Context:** AI understands task priorities, due dates, and categories
-- **Conversation History:** Persistent chat history across sessions
-- **MCP Tools Integration:** Custom Model Context Protocol tools for task operations
-- **ChatKit UI:** Modern streaming chat interface powered by OpenAI Agents SDK
+Before you begin, ensure you have the following installed:
 
-### 🤖 AI Capabilities
-- Natural language task creation: "Add buy groceries to my list"
-- Bulk operations: "Mark all today's tasks as complete"
-- Smart queries: "What tasks are due this week?"
-- Contextual understanding of priorities and deadlines
+*   **Docker Desktop** (or Docker Engine)
+*   **Minikube**
+*   **Kubectl**
+*   **Helm**
+*   **Python 3.10+** (for database initialization scripts)
 
-### 🚀 Getting Started
+## Step-by-Step Deployment Guide
 
-#### Prerequisites
-- Node.js 20+
-- Python 3.13+
-- PostgreSQL Database (Neon DB)
-- OpenAI API Key
+### 1. Start Minikube
 
-#### 1. Backend Setup
+Start your local Kubernetes cluster:
+
 ```bash
-cd todo_app/phase_3/backend
-uv sync
-cp .env.example .env
-# Edit .env: Set DATABASE_URL, BETTER_AUTH_SECRET, OPENAI_API_KEY
-alembic upgrade head  # Run migrations
-uv run uvicorn src.main:app --reload --port 8000
+minikube start --driver=docker --cpus=2 --memory=4000
 ```
 
-#### 2. Frontend Setup
+### 2. Build and Load Docker Images
+
+Build the Docker images for both the frontend and backend. We are using `v1.0.4` for the backend to include critical UUID fixes.
+
+**Backend (v1.0.4):**
 ```bash
-cd todo_app/phase_3/frontend
-npm install
-cp .env.local.example .env.local
-# Edit .env.local: Set NEXT_PUBLIC_API_URL and auth variables
-npm run dev
+cd backend
+docker build -t todo-backend:v1.0.4 .
+minikube image load todo-backend:v1.0.4
 ```
 
-#### 3. Usage
-Open [http://localhost:3000](http://localhost:3000) and click the chatbot icon to start chatting!
-
----
-
-## Phase 2: Full-Stack Web App
-
-A modern task management application featuring a Next.js frontend and FastAPI backend with secure authentication and PostgreSQL storage.
-
-### ✨ Features
-- **Authentication:** Secure Signup/Login using Better Auth and JWT.
-- **Task Management:** Create, Read, Update, Delete tasks.
-- **Modern UI:** Built with Shadcn/UI and Tailwind CSS.
-- **Secure Backend:** FastAPI with Pydantic validation and SQLModel.
-
-### 🚀 Getting Started
-
-#### Prerequisites
-- Node.js 20+
-- Python 3.12+
-- `uv` package manager
-- PostgreSQL Database (Neon DB recommended)
-
-#### 1. Backend Setup
+**Frontend (v1.0.0):**
 ```bash
-cd todo_app/phase_2/backend
-uv sync
-cp .env.example .env
-# Edit .env: Set DATABASE_URL and BETTER_AUTH_SECRET
-uv run uvicorn src.todo_app.main:app --reload --port 8000
+cd ../frontend
+docker build -t todo-frontend:v1.0.0 .
+minikube image load todo-frontend:v1.0.0
 ```
 
-#### 2. Frontend Setup
+### 3. Initialize the Database (UUID Schema)
+
+Since we migrated to UUIDs, the existing table must be dropped and recreated. Run this script from your host (ensure `sqlalchemy` and `psycopg2-binary` are installed):
+
 ```bash
-cd todo_app/phase_2/frontend
-npm install
-cp .env.local.example .env.local
-# Edit .env.local: Copy values from backend .env
-# Run Migration (First time only)
-node migrate-postgres.mjs
-npm run dev
+# From todo_app/phase_4/ directory
+uv run --with sqlalchemy --with psycopg2-binary python manual_init_db.py
 ```
 
-#### 3. Usage
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### 4. Deploy with Helm
 
----
-
-## Phase 1: CLI Console App
-
-A robust command-line interface for managing tasks locally.
-
-### 🚀 Getting Started
+Navigate to the Helm chart directory and install the application using the following command. **Note:** Use the exact `sslmode=require` parameter.
 
 ```bash
-cd todo_app/phase_1
-uv sync
-uv run python -m todo_app.main
+cd ../k8s/helm
+
+helm upgrade --install todo-app ./todo-app \
+  --set secrets.databaseUrl="postgresql://neondb_owner:<PASSWORD>@<HOST>/neondb?sslmode=require" \
+  --set secrets.geminiApiKey="<YOUR_KEY>" \
+  --set secrets.betterAuthSecret="<YOUR_SECRET>" \
+  --set secrets.betterAuthUrl="http://localhost:3000"
+```
+
+### 5. Access the Application (Port Forwarding)
+
+Because we are running in a local environment, use `kubectl port-forward` to access the services from your browser. Run these in separate terminals:
+
+**Frontend (Port 3000):**
+```bash
+kubectl port-forward --address 0.0.0.0 svc/todo-app-frontend 3000:3000
+```
+
+**Backend (Port 8000):**
+```bash
+kubectl port-forward --address 0.0.0.0 svc/todo-app-backend 8000:8000
+```
+
+Now open [http://localhost:3000](http://localhost:3000) in your browser (Incognito mode recommended).
+
+## Troubleshooting
+
+- **500 Internal Server Error:** Check backend logs: `kubectl logs -l app.kubernetes.io/component=backend`. Common cause is Pydantic schema mismatch or missing database table.
+- **Connection Refused:** Ensure you are using `--address 0.0.0.0` in your port-forward command to allow WSL/Windows communication.
+- **CORS Issues:** The `v1.0.4` backend has wildcard CORS enabled for debugging. If issues persist, clear browser cache or use Incognito mode.
+
+## Clean Up
+
+```bash
+helm uninstall todo-app
+minikube stop
 ```

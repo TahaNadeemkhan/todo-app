@@ -1,0 +1,37 @@
+# Dapr State Store Component for PostgreSQL
+# Based on Hackathon II Document - Phase V Requirements
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+  namespace: default
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+    # Connection string from Kubernetes secret
+    - name: connectionString
+      secretKeyRef:
+        name: postgres-secret
+        key: connectionString
+
+    # Table name for state storage
+    - name: tableName
+      value: "dapr_state"
+
+    # Metadata table name
+    - name: metadataTableName
+      value: "dapr_metadata"
+
+    # Timeout for operations
+    - name: timeout
+      value: "20"
+
+    # Connection pool settings
+    - name: maxConns
+      value: "10"
+    - name: connectionMaxIdleTime
+      value: "5m"
+scopes:
+  - backend-service
+  - notification-service

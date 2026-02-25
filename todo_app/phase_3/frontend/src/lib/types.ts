@@ -1,3 +1,10 @@
+export interface Tag {
+  id: string;
+  name: string;
+  user_id: string;
+  color?: string;
+}
+
 export interface Task {
   id: number;
   user_id: string;
@@ -6,6 +13,7 @@ export interface Task {
   completed: boolean;
   due_date?: string;
   priority?: "low" | "medium" | "high";
+  tags?: Tag[];
   // Notification settings
   notify_email?: string;
   notifications_enabled: boolean;

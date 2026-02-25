@@ -1,0 +1,47 @@
+# Dapr Pub/Sub Component for Kafka
+# Based on Hackathon II Document - Phase V Requirements
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+  namespace: default
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    # Kafka brokers (update based on deployment)
+    - name: brokers
+      value: "kafka:9092"  # Local Minikube
+      # value: "your-redpanda-cluster.cloud:9092"  # Redpanda Cloud
+
+    # Consumer group for this service
+    - name: consumerGroup
+      value: "todo-service"
+
+    # Client ID
+    - name: clientID
+      value: "todo-backend"
+
+    # Authentication (uncomment for cloud)
+    # - name: authType
+    #   value: "password"
+    # - name: saslUsername
+    #   secretKeyRef:
+    #     name: kafka-secrets
+    #     key: username
+    # - name: saslPassword
+    #   secretKeyRef:
+    #     name: kafka-secrets
+    #     key: password
+
+    # Version
+    - name: version
+      value: "2.0.0"
+
+    # Topic configuration
+    - name: initialOffset
+      value: "newest"
+scopes:
+  - backend-service
+  - notification-service
+  - recurring-task-service

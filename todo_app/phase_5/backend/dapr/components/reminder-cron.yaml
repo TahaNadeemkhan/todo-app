@@ -1,0 +1,22 @@
+# T101 [US2]: Dapr Cron binding for ReminderScheduler
+#
+# Triggers the reminder scheduler every 5 minutes to check for due reminders
+# and publish reminder.due events to Kafka.
+#
+# Component Type: bindings.cron
+# Schedule: Every 5 minutes (@every 5m)
+# Target: POST /dapr/reminders/cron
+
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: reminder-cron
+  namespace: default
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+  - name: schedule
+    value: "@every 5m"  # Run every 5 minutes
+  - name: direction
+    value: "input"  # This is an input binding (triggers our app)

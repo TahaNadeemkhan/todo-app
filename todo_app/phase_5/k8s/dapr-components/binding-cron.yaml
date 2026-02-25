@@ -1,0 +1,41 @@
+# Dapr Cron Binding for Reminder Checks
+# Based on Hackathon II Document - Phase V Requirements
+# NOTE: Consider using Dapr Jobs API instead for exact timing (see doc page 33)
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: reminder-cron
+  namespace: default
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every 5 minutes
+    - name: schedule
+      value: "*/5 * * * *"  # Cron format: every 5 minutes
+
+    # Direction: input only (triggers service)
+    - name: direction
+      value: "input"
+scopes:
+  - backend-service
+
+---
+# Alternative: Recurring Task Cron Binding
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: recurring-task-cron
+  namespace: default
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every hour to check for recurring tasks
+    - name: schedule
+      value: "0 * * * *"  # Every hour
+
+    - name: direction
+      value: "input"
+scopes:
+  - recurring-task-service

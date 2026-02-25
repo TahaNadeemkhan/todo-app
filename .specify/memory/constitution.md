@@ -1,7 +1,8 @@
 <!--
 Sync Impact Report:
-- Version change: 1.2.0 (Minor)
-- Principles Defined:
+- Version change: 1.2.0 → 1.2.1 (Patch)
+- Change summary: Updated Last Amended date to reflect Phase 5 planning completion. No principle changes required - all existing principles remain valid and comprehensive for Phase 5 event-driven cloud deployment.
+- Principles Defined (unchanged):
     - I. Spec-Driven Discipline: Mandates spec-first workflow and Claude Code usage.
     - II. Architectural Separation: Enforces clear layering (UI/Service/Repository) and dependency inversion.
     - III. Domain-First Modeling: Requires strict Pydantic models, type hinting, and valid state enforcement.
@@ -13,11 +14,16 @@ Sync Impact Report:
     - IX. Test-Driven Development (TDD): Enforces Red-Green-Refactor cycle using pytest.
     - X. Modern Python Tooling: Mandates usage of `uv` for dependency management.
     - XI. The Nine Pillars of AI-Driven Development: Explicitly adopts the nine pillars as guiding architectural philosophy.
-- Governance: Established amendment process and versioning rules.
+- Governance: No changes (amendment process and versioning rules remain valid).
 - Templates requiring updates:
-    - .specify/templates/plan-template.md (✅ updated - conceptually)
-    - .specify/templates/spec-template.md (✅ updated - conceptually)
-    - .specify/templates/tasks-template.md (✅ updated - conceptually)
+    - .specify/templates/plan-template.md (✅ validated - aligns with all principles)
+    - .specify/templates/spec-template.md (✅ validated - aligns with all principles)
+    - .specify/templates/tasks-template.md (✅ validated - aligns with all principles)
+    - .specify/templates/phr-template.prompt.md (✅ validated - compatible)
+- Validation notes:
+    - Phase 5 planning artifacts (plan.md, research.md, data-model.md) successfully validated against all 11 principles
+    - Event-driven architecture (Principle VII) and Immutable Infrastructure (Principle VI) directly guide Phase 5 implementation
+    - No new principles needed; existing framework comprehensively covers Phase 5 requirements
 -->
 
 # Todo App - Hackathon II Constitution
@@ -122,4 +128,4 @@ This Constitution supersedes all other coding practices. It is the highest autho
 - All Pull Requests must be reviewed against these principles.
 - Code reviews must explicitly cite violations of these principles (e.g., "Violates Principle II: UI logic found in Service Layer").
 
-**Version**: 1.2.0 | **Ratified**: 2025-12-08 | **Last Amended**: 2025-12-08
+**Version**: 1.2.1 | **Ratified**: 2025-12-08 | **Last Amended**: 2026-01-04
