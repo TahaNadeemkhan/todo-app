@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.task import Task
+import uuid # Add this import
 
 class TaskRepository:
     def __init__(self, session: AsyncSession):
@@ -20,6 +21,7 @@ class TaskRepository:
     ) -> Task:
         """Create a new task with all fields."""
         task = Task(
+            id=str(uuid.uuid4()), # Generate UUID here
             user_id=user_id,
             title=title,
             description=description,
@@ -35,8 +37,8 @@ class TaskRepository:
         return task
 
     async def get_by_user(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         completed: Optional[bool] = None,
         limit: int = 20,
         offset: int = 0
@@ -45,9 +47,9 @@ class TaskRepository:
         query = select(Task).where(Task.user_id == user_id)
         if completed is not None:
             query = query.where(Task.completed == completed)
-        
+
         query = query.offset(offset).limit(limit)
-        
+
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
@@ -55,13 +57,13 @@ class TaskRepository:
         """Backward compatibility alias for list_by_user without pagination."""
         return await self.get_by_user(user_id, completed, limit=100)
 
-    async def get_by_id(self, task_id: int) -> Optional[Task]:
+    async def get_by_id(self, task_id: str) -> Optional[Task]: # Change task_id type to str
         """Get task by ID."""
         query = select(Task).where(Task.id == task_id)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def update(self, task_id: int, user_id: str, **updates) -> Task:
+    async def update(self, task_id: str, user_id: str, **updates) -> Task: # Change task_id type to str
         """Update task and verify user ownership."""
         task = await self.get_by_id(task_id)
         if not task:
@@ -79,7 +81,7 @@ class TaskRepository:
         await self.session.refresh(task)
         return task
 
-    async def delete(self, task_id: int, user_id: str) -> bool:
+    async def delete(self, task_id: str, user_id: str) -> bool: # Change task_id type to str
         """Delete task and verify user ownership."""
         task = await self.get_by_id(task_id)
         if not task:

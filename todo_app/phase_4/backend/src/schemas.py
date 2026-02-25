@@ -40,7 +40,7 @@ class TaskUpdate(BaseModel):
 class TaskResponse(BaseModel):
     """Schema for task responses."""
 
-    id: int
+    id: str
     user_id: str
     title: str
     description: str | None

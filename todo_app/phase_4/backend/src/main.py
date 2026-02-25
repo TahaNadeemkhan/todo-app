@@ -35,7 +35,7 @@ app = FastAPI(
 # Configure CORS for ChatKit frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict to specific domains in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

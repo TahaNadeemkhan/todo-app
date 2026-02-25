@@ -8,7 +8,7 @@ class Task(SQLModel, table=True):
 
     __tablename__ = "tasks"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(primary_key=True, max_length=36)
     user_id: str = Field(index=True, nullable=False)
     title: str = Field(nullable=False, max_length=255)
     description: Optional[str] = Field(default=None, max_length=2000)

@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api", tags=["tasks"])
 
 async def send_email_notification(
     user_id: str,
-    task_id: int,
+    task_id: str,
     notify_email: str,
     notification_type: str,
     task_title: str,
@@ -117,7 +117,7 @@ async def create_task(
 @router.get("/{user_id}/tasks/{task_id}", response_model=TaskResponse)
 async def get_task(
     user_id: str,
-    task_id: int,
+    task_id: str,
     session: AsyncSession = Depends(get_async_session),
 ) -> Task:
     """
@@ -135,7 +135,7 @@ async def get_task(
 @router.put("/{user_id}/tasks/{task_id}", response_model=TaskResponse)
 async def update_task(
     user_id: str,
-    task_id: int,
+    task_id: str,
     task_in: TaskUpdate,
     session: AsyncSession = Depends(get_async_session),
 ) -> Task:
@@ -182,7 +182,7 @@ async def update_task(
 @router.delete("/{user_id}/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     user_id: str,
-    task_id: int,
+    task_id: str,
     session: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
@@ -221,7 +221,7 @@ async def delete_task(
 @router.patch("/{user_id}/tasks/{task_id}/complete", response_model=TaskResponse)
 async def complete_task(
     user_id: str,
-    task_id: int,
+    task_id: str,
     session: AsyncSession = Depends(get_async_session),
 ) -> Task:
     """
