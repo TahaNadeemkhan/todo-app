@@ -71,7 +71,7 @@ class TaskService:
         description: Optional[str] = None,
         priority: str = "medium",
         tags: Optional[List[str]] = None,
-        due_at: Optional[datetime] = None,
+        due_date: Optional[datetime] = None,
         has_recurrence: bool = False,
         recurrence_pattern: Optional[str] = None,
         recurrence_interval: Optional[int] = None,
@@ -90,7 +90,7 @@ class TaskService:
             description: Task description (optional)
             priority: Task priority (high/medium/low)
             tags: List of task tags (optional)
-            due_at: Task due date/time (optional)
+            due_date: Task due date/time (optional)
             has_recurrence: Whether task recurs (optional)
             recurrence_pattern: Recurrence pattern (daily/weekly/monthly)
             recurrence_interval: Recurrence interval (e.g., every N days)
@@ -116,7 +116,7 @@ class TaskService:
             description=description,
             priority=priority,
             tags=tags or [],
-            due_at=due_at,
+            due_date=due_date,
             completed=False,
             # Legacy fields for backward compatibility
             notify_email=kwargs.get("notify_email"),
@@ -139,7 +139,7 @@ class TaskService:
                     interval=recurrence_interval or 1,
                     days_of_week=recurrence_days_of_week,
                     day_of_month=recurrence_day_of_month,
-                    initial_due_at=due_at
+                    initial_due_at=due_date
                 )
                 recurrence_id = recurrence.id
 
@@ -187,7 +187,7 @@ class TaskService:
                 "description": task.description,
                 "priority": task.priority,
                 "tags": task.tags,
-                "due_at": task.due_at.isoformat() + "Z" if task.due_at else None,
+                "due_date": task.due_date.isoformat() + "Z" if task.due_date else None,
                 "has_recurrence": has_recurrence,
                 "recurrence_pattern": recurrence_pattern,
                 "recurrence_interval": recurrence_interval,
@@ -436,27 +436,62 @@ class TaskService:
         self,
         user_id: str,
         completed: Optional[bool] = None,
+        priority: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        search: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc",
         limit: int = 20,
         offset: int = 0
     ) -> List[Task]:
         """
-        List tasks for a user with optional filtering (no event published).
+        List tasks for a user with optional filtering and sorting.
 
         Args:
             user_id: User UUID
-            completed: Filter by completion status (None = all tasks)
-            limit: Maximum tasks to return (pagination)
-            offset: Number of tasks to skip (pagination)
+            completed: Filter by completion status
+            priority: Filter by priority
+            tags: Filter by tags (any match)
+            search: Search query text
+            sort_by: Sort field (due_date, priority, created_at, title)
+            sort_order: Sort order (asc, desc)
+            limit: Pagination limit
+            offset: Pagination offset
 
         Returns:
             List[Task]: List of task objects
         """
+        # If search is present, it's the most specific filter (sorting might be relevance, but for now ignoring sort with search)
+        if search:
+            return await self.repository.search(user_id, search)
+        
+        # If tags present
+        if tags:
+            return await self.repository.filter_by_tags(user_id, tags)
+
+        if priority:
+            return await self.repository.filter_by_priority(user_id, priority)
+
         return await self.repository.get_by_user(
             user_id=user_id,
             completed=completed,
+            sort_by=sort_by,
+            sort_order=sort_order,
             limit=limit,
             offset=offset
         )
+
+    async def get_unique_tags(self, user_id: str) -> List[str]:
+        """
+        Get all unique tags used by a user.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            List[str]: List of unique tags
+        """
+        return await self.repository.get_unique_tags(user_id)
 
 
 # ============================================================================

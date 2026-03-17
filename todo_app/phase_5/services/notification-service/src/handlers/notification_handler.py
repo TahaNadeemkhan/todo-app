@@ -231,13 +231,14 @@ class NotificationHandler:
             "data": data.model_dump(),
         }
 
+        # Use Dapr HTTP API directly
         dapr_url = f"http://localhost:{self.settings.dapr_http_port}/v1.0/publish/{self.settings.dapr_pubsub_name}/{self.settings.dapr_notifications_topic}"
 
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(dapr_url, json=event_payload, timeout=5.0)
                 response.raise_for_status()
-                logger.info(f"Published {event_type} event to Kafka")
+                logger.info(f"Published {event_type} event to Kafka via Dapr HTTP")
         except Exception as e:
             logger.error(f"Failed to publish {event_type} event: {e}")
 

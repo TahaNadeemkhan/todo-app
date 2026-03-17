@@ -122,3 +122,23 @@ def validate_user_access(
 # Type alias for dependency injection
 CurrentUser = Annotated[str, Depends(get_current_user)]
 ValidatedUserId = Annotated[str, Depends(validate_user_access)]
+
+from src.db import get_async_session
+from src.services.kafka_service import KafkaService, create_kafka_service
+from src.services.task_service import TaskService, create_task_service
+from sqlalchemy.ext.asyncio import AsyncSession
+
+# Singleton KafkaService instance (reuse connection/buffer)
+_kafka_service = None
+
+def get_kafka_service() -> KafkaService:
+    global _kafka_service
+    if _kafka_service is None:
+        _kafka_service = create_kafka_service(enable_buffer=True)
+    return _kafka_service
+
+def get_task_service(
+    session: AsyncSession = Depends(get_async_session),
+    kafka_service: KafkaService = Depends(get_kafka_service)
+) -> TaskService:
+    return create_task_service(session, kafka_service)

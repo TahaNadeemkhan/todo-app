@@ -47,8 +47,15 @@ export const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins: ["https://itask-chi.vercel.app", "http://localhost:3000"],
   advanced: {
+    disableCSRFCheck: true, // Allow dynamic Minikube tunnel ports
+    trustedOrigins: [
+      "https://itask-chi.vercel.app",
+      "http://localhost:3000",
+      "http://127.0.0.1",
+      "http://localhost",
+      "http://192.168.49.2:30000"
+    ],
     crossSubDomainCookies: {
       enabled: false,
     },

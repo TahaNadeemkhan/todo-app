@@ -4,8 +4,8 @@ replicaCount: 2
 
 image:
   repository: recurring-task-service
-  pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  pullPolicy: Never
+  tag: "v5.0.2"
 
 imagePullSecrets: []
 nameOverride: ""

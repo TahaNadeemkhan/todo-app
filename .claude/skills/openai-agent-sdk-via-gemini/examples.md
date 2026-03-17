@@ -3,7 +3,6 @@
 ## Basic Implementation with Function Tool
 
 ```python
-from unittest import result
 from agents import Agent, Runner, AsyncOpenAI, function_tool, set_tracing_disabled, OpenAIChatCompletionsModel
 import os
 from dotenv import load_dotenv
@@ -22,7 +21,7 @@ provider = AsyncOpenAI(
 # 3. Configure the Model
 model = OpenAIChatCompletionsModel(
     openai_client=provider,
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
 )
 
 # 4. Define Tools

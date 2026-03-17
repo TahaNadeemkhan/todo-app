@@ -1,37 +1,18 @@
-# Dapr State Store Component for PostgreSQL
-# Based on Hackathon II Document - Phase V Requirements
+# Dapr State Store Component for Redis (Local Dev Stability)
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: statestore
-  namespace: default
+  namespace: todo-app
 spec:
-  type: state.postgresql
+  type: state.redis
   version: v1
   metadata:
-    # Connection string from Kubernetes secret
-    - name: connectionString
-      secretKeyRef:
-        name: postgres-secret
-        key: connectionString
-
-    # Table name for state storage
-    - name: tableName
-      value: "dapr_state"
-
-    # Metadata table name
-    - name: metadataTableName
-      value: "dapr_metadata"
-
-    # Timeout for operations
-    - name: timeout
-      value: "20"
-
-    # Connection pool settings
-    - name: maxConns
-      value: "10"
-    - name: connectionMaxIdleTime
-      value: "5m"
+  - name: redisHost
+    value: redis:6379
+  - name: redisPassword
+    value: ""
 scopes:
-  - backend-service
+  - backend-api
   - notification-service
+  - recurring-task-service

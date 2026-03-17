@@ -13,7 +13,7 @@ Event Types:
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
@@ -118,7 +118,7 @@ class TaskCreatedEvent(BaseEvent):
     Produced By: Backend API, Recurring Task Service
     Consumed By: Analytics Service (future)
     """
-    event_type: str = Field(default="task.created.v1", const=True)
+    event_type: Literal["task.created.v1"] = "task.created.v1"
     data: TaskCreatedData
 
     model_config = {
@@ -171,7 +171,7 @@ class TaskUpdatedEvent(BaseEvent):
     Produced By: Backend API
     Consumed By: Analytics Service (future)
     """
-    event_type: str = Field(default="task.updated.v1", const=True)
+    event_type: Literal["task.updated.v1"] = "task.updated.v1"
     data: TaskUpdatedData
 
     model_config = {
@@ -225,7 +225,7 @@ class TaskCompletedEvent(BaseEvent):
     Critical: This event triggers the Recurring Task Service to create the next
     occurrence if has_recurrence=true.
     """
-    event_type: str = Field(default="task.completed.v1", const=True)
+    event_type: Literal["task.completed.v1"] = "task.completed.v1"
     data: TaskCompletedData
 
     model_config = {
@@ -269,7 +269,7 @@ class TaskDeletedEvent(BaseEvent):
     Produced By: Backend API
     Consumed By: Analytics Service (future)
     """
-    event_type: str = Field(default="task.deleted.v1", const=True)
+    event_type: Literal["task.deleted.v1"] = "task.deleted.v1"
     data: TaskDeletedData
 
     model_config = {
@@ -315,7 +315,7 @@ class ReminderDueEvent(BaseEvent):
 
     Critical: This event triggers the Notification Service to send email/push notifications.
     """
-    event_type: str = Field(default="reminder.due.v1", const=True)
+    event_type: Literal["reminder.due.v1"] = "reminder.due.v1"
     data: ReminderDueData
 
     model_config = {
@@ -362,7 +362,7 @@ class NotificationSentEvent(BaseEvent):
     Produced By: Notification Service
     Consumed By: Backend API (future - update status), Analytics Service (future)
     """
-    event_type: str = Field(default="notification.sent.v1", const=True)
+    event_type: Literal["notification.sent.v1"] = "notification.sent.v1"
     data: NotificationSentData
 
     model_config = {
@@ -409,7 +409,7 @@ class NotificationFailedEvent(BaseEvent):
     Produced By: Notification Service
     Consumed By: Backend API (future - update status, retry), Analytics Service (future)
     """
-    event_type: str = Field(default="notification.failed.v1", const=True)
+    event_type: Literal["notification.failed.v1"] = "notification.failed.v1"
     data: NotificationFailedData
 
     model_config = {

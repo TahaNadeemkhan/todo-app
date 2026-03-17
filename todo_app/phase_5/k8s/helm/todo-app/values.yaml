@@ -1,0 +1,101 @@
+# Global settings
+global:
+  environment: development
+
+# Dapr configuration
+dapr:
+  enabled: true
+  sidecar:
+    cpu: "100m"
+    memory: "128Mi"
+
+# Backend API
+backend:
+  replicaCount: 1
+  image:
+    repository: backend-api
+    pullPolicy: IfNotPresent
+    tag: "v5.0.2"
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+
+# Frontend
+frontend:
+  replicaCount: 1
+  image:
+    repository: frontend
+    pullPolicy: IfNotPresent
+    tag: "v5.0.2"
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+# Notification Service
+notificationService:
+  replicaCount: 1
+  image:
+    repository: notification-service
+    pullPolicy: IfNotPresent
+    tag: "v5.0.2"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Recurring Task Service
+recurringTaskService:
+  replicaCount: 1
+  image:
+    repository: recurring-task-service
+    pullPolicy: IfNotPresent
+    tag: "v5.0.2"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Dependencies
+kafka:
+  enabled: true
+  auth:
+    clientProtocol: plaintext
+  persistence:
+    enabled: false # Ephemeral for Minikube
+  zookeeper:
+    enabled: false # Use KRaft
+
+postgresql:
+  enabled: true
+  auth:
+    username: user
+    password: password
+    database: todo_db
+  primary:
+    persistence:
+      enabled: false # Ephemeral for Minikube

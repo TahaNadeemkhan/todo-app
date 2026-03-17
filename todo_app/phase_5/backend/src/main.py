@@ -33,9 +33,22 @@ app = FastAPI(
 )
 
 # Configure CORS for ChatKit frontend
+cors_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:43745", # Minikube Tunnel
+]
+
+# Add CORS_ORIGINS from env if present
+env_origins = os.getenv("CORS_ORIGINS")
+if env_origins:
+    cors_origins.extend([o.strip() for o in env_origins.split(",")])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict to specific domains in production
+    allow_origins=cors_origins if os.getenv("NODE_ENV") != "development" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

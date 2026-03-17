@@ -19,6 +19,22 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Check if tasks.id is Integer and migrate to String if needed
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = inspector.get_columns('tasks')
+    id_col = next((c for c in columns if c['name'] == 'id'), None)
+    
+    if id_col and isinstance(id_col['type'], sa.Integer):
+        # Drop old notifications table if it exists to allow changing tasks.id
+        op.execute('DROP TABLE IF EXISTS notifications CASCADE')
+        
+        # Convert id from Integer to String (UUID compatible)
+        # Casting integer to string works implicitly or explicitly
+        op.execute('ALTER TABLE tasks ALTER COLUMN id TYPE VARCHAR(36) USING id::varchar')
+        # Drop default if it was a serial/sequence
+        op.execute('ALTER TABLE tasks ALTER COLUMN id DROP DEFAULT')
+
     # Create task_reminders table
     op.create_table(
         'task_reminders',

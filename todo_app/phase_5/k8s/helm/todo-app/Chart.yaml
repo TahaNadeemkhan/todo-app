@@ -1,0 +1,21 @@
+apiVersion: v2
+name: todo-app
+description: A Helm chart for the Todo App (Phase 5)
+type: application
+version: 5.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: kafka
+    version: 26.4.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
+  - name: postgresql
+    version: 13.2.24
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: notification-service
+    version: 1.0.0
+    repository: "file://charts/notification-service"
+  - name: recurring-task-service
+    version: 1.0.0
+    repository: "file://charts/recurring-task-service"

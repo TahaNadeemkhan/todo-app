@@ -9,7 +9,11 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import REGISTRY, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+
+# Unregister existing metrics to avoid "Duplicated timeseries" error
+for collector in list(REGISTRY._collector_to_names.keys()):
+    REGISTRY.unregister(collector)
 from fastapi import Response
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -71,7 +75,25 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://user:password@localhost:5432/recurring_task_db"
 )
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+# Robust DB URL handling for asyncpg and SSL
+db_url = DATABASE_URL
+connect_args = {}
+
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+
+if "sslmode" in db_url:
+    import re
+    db_url = re.sub(r"[?&]sslmode=[^&]+", "", db_url)
+    if db_url.endswith("?") or db_url.endswith("&"):
+        db_url = db_url[:-1]
+    connect_args["ssl"] = "require"
+
+engine = create_async_engine(
+    db_url,
+    echo=False,
+    connect_args=connect_args
+)
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,

@@ -12,42 +12,36 @@ Use Cases:
 """
 
 import logging
+import os
 from typing import Dict, Optional
-
-from dapr.clients import DaprClient
-from dapr.clients.exceptions import DaprInternalError
-
+import httpx
 
 logger = logging.getLogger(__name__)
 
 
 class DaprSecretsService:
     """
-    T059: Dapr Secrets Store service for portable secrets management.
-
-    Features:
-    - Get secret by key
-    - Get bulk secrets
-    - Support for metadata (e.g., version)
-    - Automatic retry on transient failures
+    T059: Dapr Secrets Store service for portable secrets management using HTTP API.
+    Bypasses Dapr SDK for compatibility with Python 3.13.
     """
 
     def __init__(
         self,
-        dapr_client: Optional[DaprClient] = None,
-        secret_store_name: str = "secretstore"
+        dapr_http_port: str = "3500",
+        secret_store_name: str = "kubernetes-secrets"
     ):
         """
         Initialize DaprSecretsService.
 
         Args:
-            dapr_client: Dapr client (if None, creates new one)
-            secret_store_name: Dapr secret store component name (default: secretstore)
+            dapr_http_port: Dapr sidecar HTTP port
+            secret_store_name: Dapr secret store component name (default: kubernetes-secrets)
         """
-        self.dapr_client = dapr_client or DaprClient()
+        port = os.getenv("DAPR_HTTP_PORT", dapr_http_port)
+        self.dapr_url = f"http://localhost:{port}/v1.0/secrets/{secret_store_name}"
         self.secret_store_name = secret_store_name
 
-        logger.info(f"DaprSecretsService initialized: store={secret_store_name}")
+        logger.info(f"DaprSecretsService (HTTP) initialized: store={secret_store_name} at {self.dapr_url}")
 
     async def get_secret(
         self,
@@ -55,40 +49,35 @@ class DaprSecretsService:
         metadata: Optional[Dict[str, str]] = None
     ) -> Optional[str]:
         """
-        Get secret value by key.
-
-        Args:
-            key: Secret key to retrieve
-            metadata: Optional metadata (e.g., {"version": "latest"})
-
-        Returns:
-            Secret value as string, or None if not found
-
-        Raises:
-            Exception: If get operation fails
+        Get secret value by key using Dapr HTTP API.
         """
         try:
-            # Get secret via Dapr
-            secret_response = await self.dapr_client.get_secret(
-                store_name=self.secret_store_name,
-                key=key,
-                metadata=metadata or {}
-            )
+            url = f"{self.dapr_url}/{key}"
+            params = metadata or {}
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, params=params, timeout=5.0)
+                
+                if response.status_code == 404:
+                    logger.warning(f"Secret not found: key={key}")
+                    return None
+                
+                response.raise_for_status()
+                secret_dict = response.json()
 
-            if not secret_response.secret:
-                logger.warning(f"Secret not found: key={key}")
-                return None
+                # Dapr returns secrets as dict {key: value}
+                secret_value = secret_dict.get(key)
 
-            # Dapr returns secrets as dict {key: value}
-            # Extract the value
-            secret_value = secret_response.secret.get(key)
+                logger.info(f"Secret retrieved: key={key}, store={self.secret_store_name}")
+                return secret_value
 
-            logger.info(f"Secret retrieved: key={key}, store={self.secret_store_name}")
-
-            return secret_value
-
-        except DaprInternalError as e:
+        except Exception as e:
             logger.error(f"Dapr secret get failed: key={key}, error={str(e)}")
+            # Fallback to environment variables for local/hybrid scenarios
+            env_value = os.getenv(key)
+            if env_value:
+                logger.info(f"Falling back to env var for {key}")
+                return env_value
             raise Exception(f"Failed to get secret '{key}': {str(e)}") from e
 
     async def get_bulk_secrets(
@@ -96,50 +85,35 @@ class DaprSecretsService:
         metadata: Optional[Dict[str, str]] = None
     ) -> Dict[str, str]:
         """
-        Get all secrets from the secret store.
-
-        Args:
-            metadata: Optional metadata (e.g., {"namespace": "prod"})
-
-        Returns:
-            Dict mapping secret keys to values
-
-        Raises:
-            Exception: If get operation fails
+        Get all secrets from the secret store. (Note: Dapr bulk secrets API might vary)
         """
         try:
-            # Get bulk secrets via Dapr
-            bulk_response = await self.dapr_client.get_bulk_secret(
-                store_name=self.secret_store_name,
-                metadata=metadata or {}
-            )
+            url = f"{self.dapr_url}/bulk"
+            params = metadata or {}
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, params=params, timeout=5.0)
+                response.raise_for_status()
+                bulk_response = response.json()
 
-            if not bulk_response.secrets:
-                logger.warning("No secrets found in bulk request")
-                return {}
+                # Flatten nested dict structure { "key": { "key": "value" } }
+                secrets = {}
+                for key, value_dict in bulk_response.items():
+                    if isinstance(value_dict, dict):
+                        secrets[key] = value_dict.get(key, "")
+                    else:
+                        secrets[key] = value_dict
 
-            # Flatten nested dict structure
-            secrets = {}
-            for key, value_dict in bulk_response.secrets.items():
-                # value_dict is {key: actual_value}
-                secrets[key] = value_dict.get(key, "")
+                logger.info(f"Bulk secrets retrieved: count={len(secrets)}, store={self.secret_store_name}")
+                return secrets
 
-            logger.info(
-                f"Bulk secrets retrieved: count={len(secrets)}, "
-                f"store={self.secret_store_name}"
-            )
-
-            return secrets
-
-        except DaprInternalError as e:
+        except Exception as e:
             logger.error(f"Dapr bulk secret get failed: error={str(e)}")
-            raise Exception(f"Failed to get bulk secrets: {str(e)}") from e
+            return {}
 
     def close(self) -> None:
-        """Close Dapr client and cleanup resources."""
-        if self.dapr_client:
-            self.dapr_client.close()
-            logger.info("DaprSecretsService closed")
+        """Close resources."""
+        pass
 
 
 # ============================================================================

@@ -1,7 +1,8 @@
 "use client";
 
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,9 @@ interface SearchAndFilterBarProps {
   onStatusFilterChange: (status: "all" | "completed" | "incomplete") => void;
   priorityFilter: "all" | "high" | "medium" | "low";
   onPriorityFilterChange: (priority: "all" | "high" | "medium" | "low") => void;
+  tagsFilter: string;
+  onTagsFilterChange: (tags: string) => void;
+  onClear: () => void;
   taskCount?: number;
 }
 
@@ -27,8 +31,17 @@ export function SearchAndFilterBar({
   onStatusFilterChange,
   priorityFilter,
   onPriorityFilterChange,
+  tagsFilter,
+  onTagsFilterChange,
+  onClear,
   taskCount = 0,
 }: SearchAndFilterBarProps) {
+  const hasActiveFilters = 
+    searchQuery || 
+    statusFilter !== "all" || 
+    priorityFilter !== "all" || 
+    tagsFilter;
+
   return (
     <div className="space-y-4 mb-8">
       {/* Search Input */}
@@ -44,12 +57,21 @@ export function SearchAndFilterBar({
                      focus:ring-2 focus:ring-primary/20 transition-all
                      placeholder:text-muted-foreground"
         />
+        {searchQuery && (
+          <button 
+            onClick={() => onSearchChange("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Filter Controls */}
       <div className="flex flex-wrap gap-3 items-center">
-        <span className="text-sm font-medium text-muted-foreground">
-          Filter:
+        <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+          <Filter className="h-4 w-4" />
+          Filters:
         </span>
 
         {/* Status Filter */}
@@ -97,6 +119,31 @@ export function SearchAndFilterBar({
             </SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Tags Filter */}
+        <div className="relative w-[160px]">
+          <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Filter by tag..."
+            value={tagsFilter}
+            onChange={(e) => onTagsFilterChange(e.target.value)}
+            className="pl-8 h-9 bg-card border-border text-foreground placeholder:text-muted-foreground text-sm"
+          />
+        </div>
+
+        {/* Clear Filters Button */}
+        {hasActiveFilters && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClear}
+            className="h-9 px-2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5 mr-1" />
+            Clear
+          </Button>
+        )}
 
         {/* Result Count */}
         {taskCount > 0 && (

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-app.fullname" . }}-recurring-task
+  labels:
+    app: recurring-task-service
+spec:
+  replicas: {{ .Values.recurringTaskService.replicaCount }}
+  selector:
+    matchLabels:
+      app: recurring-task-service
+  template:
+    metadata:
+      labels:
+        app: recurring-task-service
+      annotations:
+        dapr.io/enabled: {{ .Values.dapr.enabled | quote }}
+        dapr.io/app-id: "recurring-task-service"
+        dapr.io/app-port: "8001"
+    spec:
+      containers:
+      - name: recurring-task-service
+        image: "{{ .Values.recurringTaskService.image.repository }}:{{ .Values.recurringTaskService.image.tag }}"
+        imagePullPolicy: {{ .Values.recurringTaskService.image.pullPolicy }}
+        ports:
+        - containerPort: 8001
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: connectionString
+        - name: BACKEND_API_URL
+          value: "http://todo-app-backend:8000"
+        resources:
+          {{- toYaml .Values.recurringTaskService.resources | nindent 10 }}

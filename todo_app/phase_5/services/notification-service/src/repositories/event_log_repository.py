@@ -23,12 +23,26 @@ class EventLogRepository:
     async def _get_engine(self) -> AsyncEngine:
         """Get or create database engine."""
         if self._engine is None:
+            db_url = self.settings.database_url
+            connect_args = {}
+
+            if db_url.startswith("postgresql://"):
+                db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+
+            if "sslmode" in db_url:
+                import re
+                db_url = re.sub(r"[?&]sslmode=[^&]+", "", db_url)
+                if db_url.endswith("?") or db_url.endswith("&"):
+                    db_url = db_url[:-1]
+                connect_args["ssl"] = "require"
+
             self._engine = create_async_engine(
-                self.settings.database_url,
+                db_url,
                 echo=False,
                 pool_pre_ping=True,
                 pool_size=5,
                 max_overflow=10,
+                connect_args=connect_args,
             )
         return self._engine
 

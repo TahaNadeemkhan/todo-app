@@ -2,8 +2,6 @@
 # Based on Hackathon II Document - Phase V Requirements
 # Provides Kafka (Bitnami KRaft mode), PostgreSQL, and optional services
 
-version: '3.9'
-
 services:
   # ==========================================================================
   # PostgreSQL Database (Neon-compatible local setup)
@@ -31,7 +29,7 @@ services:
   # Kafka (Bitnami - KRaft mode, no Zookeeper)
   # ==========================================================================
   kafka:
-    image: bitnami/kafka:3.6
+    image: bitnami/kafka:latest
     container_name: phase5-kafka
     ports:
       - "9092:9092"
@@ -75,7 +73,7 @@ services:
   # Kafka Topic Creation (runs once after Kafka is healthy)
   # ==========================================================================
   kafka-init:
-    image: bitnami/kafka:3.6
+    image: bitnami/kafka:latest
     container_name: phase5-kafka-init
     depends_on:
       kafka:

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Task } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Calendar as CalendarIcon, Flag, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-react";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
@@ -11,11 +12,12 @@ import { useSession } from "@/lib/auth-client";
 import apiClient from "@/lib/api";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { RecurrenceBadge } from "@/components/recurrence-badge";
 
 interface TaskItemProps {
   task: Task;
   onUpdate: (task: Task) => void;
-  onDelete: (taskId: number) => void;
+  onDelete: (taskId: string) => void;
 }
 
 export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
@@ -130,7 +132,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
             <div className="flex-1" />
 
             {/* Badges at bottom */}
-            <div className="flex flex-col gap-2 mt-auto">
+            <div className="flex flex-wrap gap-2 mt-auto">
               {task.priority && (
                 <div className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md w-fit ${
                   task.priority === 'high' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
@@ -153,6 +155,25 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                     {new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
+              )}
+
+              {task.tags && task.tags.map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5 h-6">
+                  {tag}
+                </Badge>
+              ))}
+
+              {task.has_recurrence && task.recurrence_pattern && (
+                <RecurrenceBadge 
+                  recurrence={{
+                    pattern: task.recurrence_pattern,
+                    interval: task.recurrence_interval || 1,
+                    // TODO: Backend should return these fields in task list
+                    days_of_week: [], 
+                    day_of_month: 1
+                  }} 
+                  className="h-6"
+                />
               )}
             </div>
 

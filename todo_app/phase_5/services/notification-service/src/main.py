@@ -20,6 +20,7 @@ import time
 from config import get_settings
 from handlers import NotificationHandler
 from schemas import ReminderDueEvent
+from prometheus_client import REGISTRY, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +31,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
+
+# Unregister existing metrics to avoid "Duplicated timeseries" error on reloads
+for collector in list(REGISTRY._collector_to_names.keys()):
+    REGISTRY.unregister(collector)
 
 # Prometheus Metrics
 REMINDERS_PROCESSED = Counter(

@@ -5,7 +5,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: reminder-cron
-  namespace: default
+  namespace: todo-app
 spec:
   type: bindings.cron
   version: v1
@@ -18,7 +18,7 @@ spec:
     - name: direction
       value: "input"
 scopes:
-  - backend-service
+  - backend-api
 
 ---
 # Alternative: Recurring Task Cron Binding
@@ -26,7 +26,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: recurring-task-cron
-  namespace: default
+  namespace: todo-app
 spec:
   type: bindings.cron
   version: v1

@@ -1,0 +1,18 @@
+# Exclude Python virtual environments
+.venv/
+
+# Exclude application source code directories (these are built into images)
+backend/
+frontend/
+services/
+
+# Exclude common build artifacts and development files
+*.log
+*.tmp
+tmp/
+.vscode/
+.git/
+.gitignore
+.vercelignore
+node_modules/
+package-lock.json

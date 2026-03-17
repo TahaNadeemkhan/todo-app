@@ -19,7 +19,7 @@ class Task(SQLModel, table=True):
     # Phase 5 New Fields
     priority: str = Field(default=Priority.MEDIUM.value, max_length=10)
     tags: List[str] = Field(default=[], sa_column=Column(JSONB, nullable=False, server_default='[]'))
-    due_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    due_date: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     recurrence_id: Optional[str] = Field(default=None, max_length=36, foreign_key="task_recurrences.id")
 
     # Legacy notification fields (kept for backward compatibility)

@@ -9,7 +9,7 @@ import { Calendar } from "lucide-react";
 interface TaskListProps {
   tasks: Task[];
   onTaskUpdated: (task: Task) => void;
-  onTaskDeleted: (taskId: number) => void;
+  onTaskDeleted: (taskId: string) => void;
   filter?: string | null;
 }
 

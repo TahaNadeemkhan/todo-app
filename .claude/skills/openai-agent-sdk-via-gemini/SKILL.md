@@ -16,7 +16,7 @@ When implementing AI agents using the `openai-agents` Python SDK, you can config
     *   Set `base_url` to `"https://generativelanguage.googleapis.com/v1beta/openai/"`.
 4.  **Configure Model**: Initialize `OpenAIChatCompletionsModel`.
     *   Pass the configured `provider` (the AsyncOpenAI client).
-    *   Set the `model` parameter to a valid Gemini model string (e.g., `"gemini-2.0-flash"`).
+    *   Set the `model` parameter to a valid Gemini model string (e.g., `"gemini-2.5-flash"`).
 5.  **Define Tools**: Create your tools using the `@function_tool` decorator.
 6.  **Create Agent**: Instantiate the `Agent` class, passing the configured `model` and your tools.
 7.  **Run Agent**: Use `Runner` to execute the agent synchronously or asynchronously.

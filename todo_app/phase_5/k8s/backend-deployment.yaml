@@ -36,7 +36,7 @@ spec:
       serviceAccountName: backend-api-sa
       containers:
       - name: backend-api
-        image: backend-api:latest
+        image: backend-api:v5.0.2
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
@@ -52,15 +52,15 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: backend-secrets
-              key: database-url
+              name: postgres-credentials
+              key: connectionString
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: backend-secrets
-              key: jwt-secret
+              name: jwt-secret
+              key: secret_key
         - name: KAFKA_BROKERS
-          value: "kafka:9092"
+          value: "kafka-broker:9092"
         resources:
           requests:
             cpu: 200m

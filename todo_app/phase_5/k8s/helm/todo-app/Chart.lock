@@ -1,0 +1,15 @@
+dependencies:
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 26.4.2
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.2.24
+- name: notification-service
+  repository: file://charts/notification-service
+  version: 1.0.0
+- name: recurring-task-service
+  repository: file://charts/recurring-task-service
+  version: 1.0.0
+digest: sha256:9a697f83371cac4b6ea1aef0e2379c526f86f6cb7b2cfe247a35b0853762bdf1
+generated: "2026-03-06T01:20:54.147583919+05:00"

@@ -11,10 +11,9 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolPara
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.conversation import Conversation
 from models.message import Message, MessageRole
-from repositories.conversation_repository import ConversationRepository
 from repositories.message_repository import MessageRepository
+from services.conversation_state_service import ConversationStateService, MessageState
 from mcp_server.server import mcp
 
 load_dotenv()
@@ -24,7 +23,8 @@ logger = logging.getLogger(__name__)
 class ChatService:
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.conversation_repo = ConversationRepository(session)
+        # T058: Use Dapr State Store for conversation management (portable)
+        self.conversation_service = ConversationStateService()
         self.message_repo = MessageRepository(session)
         
         # Configure OpenAI client for Gemini
@@ -53,27 +53,26 @@ class ChatService:
         """
         Process a user message, interact with OpenAI and MCP tools, and return the response.
         """
-        # 1. Get or Create Conversation
+        # 1. Get or Create Conversation (T058: Using Dapr State Store)
         if conversation_id:
-            conversation = await self.conversation_repo.get_by_id(conversation_id)
+            conversation = await self.conversation_service.get_conversation(conversation_id)
             if not conversation:
-                # Fallback to creating new if not found (or raise error)
-                conversation = await self.conversation_repo.create(user_id)
+                # Fallback to creating new if not found
+                conversation = await self.conversation_service.create_conversation(user_id)
         else:
-            conversation = await self.conversation_repo.create(user_id)
+            conversation = await self.conversation_service.create_conversation(user_id)
         
         current_conversation_id = conversation.id
 
-        # 2. Persist User Message
-        await self.message_repo.create(
+        # 2. Persist User Message (T058: Using Dapr State Store)
+        await self.conversation_service.add_message(
             conversation_id=current_conversation_id,
-            user_id=user_id,
-            role=MessageRole.user,
+            role="user",
             content=message_content
         )
 
-        # 3. Load History
-        history = await self.message_repo.get_history(current_conversation_id)
+        # 3. Load History (T058: From Dapr State Store)
+        history = await self.conversation_service.get_conversation_history(current_conversation_id)
         
         # 4. Prepare Messages for OpenAI
         messages: List[ChatCompletionMessageParam] = [
@@ -81,8 +80,8 @@ class ChatService:
         ]
         
         for msg in history:
-            role = "user" if msg.role == MessageRole.user else "assistant"
-            messages.append({"role": role, "content": msg.content})
+            # msg is now MessageState from Dapr
+            messages.append({"role": msg.role, "content": msg.content})
 
         # 5. Prepare Tools
         tools = self._get_openai_tools()
@@ -142,12 +141,11 @@ class ChatService:
                 final_response_content = response_message.content or ""
                 break
 
-        # 7. Persist Assistant Response
+        # 7. Persist Assistant Response (T058: Using Dapr State Store)
         if final_response_content:
-            await self.message_repo.create(
+            await self.conversation_service.add_message(
                 conversation_id=current_conversation_id,
-                user_id=user_id,
-                role=MessageRole.assistant,
+                role="assistant",
                 content=final_response_content
             )
 

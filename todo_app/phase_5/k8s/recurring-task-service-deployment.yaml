@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recurring-task-service
+  namespace: todo-app
+  labels:
+    app: recurring-task-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recurring-task-service
+  template:
+    metadata:
+      labels:
+        app: recurring-task-service
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "recurring-task-service"
+        dapr.io/app-port: "8001"
+    spec:
+      containers:
+      - name: recurring-task-service
+        image: recurring-task-service:v5.0.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8001
+        env:
+        - name: PORT
+          value: "8001"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: connectionString
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recurring-task-service
+  namespace: todo-app
+spec:
+  selector:
+    app: recurring-task-service
+  ports:
+  - port: 80
+    targetPort: 8001
+    protocol: TCP
