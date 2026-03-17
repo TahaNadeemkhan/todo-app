@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Calendar as CalendarIcon, Flag, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-react";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
+import { TagBadge } from "./ui/TagBadge";
+import { MarkdownRenderer } from "./ui/MarkdownRenderer";
 import { useSession } from "@/lib/auth-client";
 import apiClient from "@/lib/api";
 import { toast } from "sonner";
@@ -116,14 +118,24 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 <h3 className={`font-medium text-base transition-all duration-300 line-clamp-2 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                   {task.title}
                 </h3>
+
+                {/* Tags below title */}
+                {task.tags && task.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {task.tags.map((tag) => (
+                      <TagBadge key={tag.id} name={tag.name} color={tag.color} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Description */}
             {task.description && (
-              <p className="text-sm text-foreground/60 dark:text-foreground/50 line-clamp-2 leading-relaxed">
-                {task.description}
-              </p>
+              <MarkdownRenderer
+                content={task.description}
+                className="text-sm text-foreground/60 dark:text-foreground/50 line-clamp-2 leading-relaxed"
+              />
             )}
 
             {/* Spacer to push badges to bottom */}

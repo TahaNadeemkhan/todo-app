@@ -1,0 +1,110 @@
+name: Phase 5 CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'todo_app/phase_5/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'todo_app/phase_5/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies & Run Tests (Backend)
+        run: |
+          cd todo_app/phase_5/backend
+          uv sync --all-extras --dev
+          uv run pytest
+
+      - name: Install Dependencies & Run Tests (Notification Service)
+        run: |
+          cd todo_app/phase_5/services/notification-service
+          uv sync --all-extras --dev
+          # uv run pytest
+
+      - name: Install Dependencies & Run Tests (Recurring Task Service)
+        run: |
+          cd todo_app/phase_5/services/recurring-task-service
+          uv sync --all-extras --dev
+          # uv run pytest
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: todo_app/phase_5/backend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend-api:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend-api:${{ github.sha }}
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: todo_app/phase_5/frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}
+
+      - name: Build and push Notification Service
+        uses: docker/build-push-action@v5
+        with:
+          context: todo_app/phase_5/services/notification-service
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/notification-service:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/notification-service:${{ github.sha }}
+
+      - name: Build and push Recurring Task Service
+        uses: docker/build-push-action@v5
+        with:
+          context: todo_app/phase_5/services/recurring-task-service
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/recurring-task-service:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/recurring-task-service:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.11.1
+
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying to Kubernetes (Mock)..."
+          # Requires KUBECONFIG secret to be set
+          # helm upgrade --install todo-app todo_app/phase_5/k8s/helm/todo-app -n todo-app

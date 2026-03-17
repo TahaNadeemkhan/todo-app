@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.13 (Backend/Services), TypeScript/React (Frontend) + FastAPI, Dapr (via HTTP API), Kafka (via Dapr), PostgreSQL (via Dapr) (001-fix-phase5-deployment)
+- Neon PostgreSQL (Production), Local PostgreSQL container (Minikube fallback) (001-fix-phase5-deployment)
+
+## Recent Changes
+- 001-fix-phase5-deployment: Added Python 3.13 (Backend/Services), TypeScript/React (Frontend) + FastAPI, Dapr (via HTTP API), Kafka (via Dapr), PostgreSQL (via Dapr)

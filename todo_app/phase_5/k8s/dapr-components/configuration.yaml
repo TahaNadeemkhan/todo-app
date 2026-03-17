@@ -1,0 +1,15 @@
+# Dapr Configuration for global settings
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+  namespace: todo-app
+spec:
+  # Removing mtls block entirely to avoid validation errors in local dev
+  tracing:
+    samplingRate: "1"
+  metric:
+    enabled: true
+  accessControl:
+    defaultAction: allow
+    trustDomain: "public"

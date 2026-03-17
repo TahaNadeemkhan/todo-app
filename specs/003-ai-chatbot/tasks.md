@@ -1,509 +1,123 @@
-# Implementation Tasks: AI-Powered Todo Chatbot
+# Implementation Tasks: Tags & Rich Notes
 
-**Branch**: `003-ai-chatbot` | **Date**: 2025-12-17
+**Branch**: `003-ai-chatbot` | **Date**: 2026-01-05
 **Plan**: [plan.md](./plan.md) | **Spec**: [spec.md](./spec.md)
 
 ## Overview
 
-Implementation decomposed into atomic, independently completable tasks following TDD cycles.
-
-**Key Principles:**
-- Each task is 1-2 hours, immediately executable
-- Tests written before implementation (TDD)
-- Tasks ordered by dependency (foundational → features → polish)
+This task list breaks down the implementation of the Tags and Rich Notes features into atomic, TDD-ready tasks, ordered by dependency.
 
 ---
 
-## Phase 1: Foundation - Database Models
+## Phase 1: Backend - Database Models for Tags
 
-**Goal**: Create database schema for conversations and messages
+**Goal**: Create the database schema for a many-to-many relationship between Tasks and Tags.
 
-### [x] [T001] [P1] [US1] Create Conversation SQLModel
-- File: `backend/src/models/conversation.py`
-- Define Conversation model with fields: id (UUID), user_id (FK), created_at, updated_at
-- Add relationship to Message model
-- Ensure user_id is indexed for efficient queries
+### [x] [T040] [P1] [US9] Create Tag and TaskTagLink SQLModels
+- **File**: `backend/src/models/tag.py`, `backend/src/models/task_tag_link.py`
+- Define `Tag` model: `id`, `name`, `user_id`, `color`.
+- Define `TaskTagLink` model for the join table: `task_id`, `tag_id`.
 
-### [x] [T002] [P1] [US1] Write tests for Conversation model
-- File: `backend/tests/unit/models/test_conversation.py`
-- Test: conversation creation with valid user_id
-- Test: auto-generated UUID and timestamps
-- Test: user_id index exists
+### [x] [T041] [P1] [US9] Write tests for Tag and TaskTagLink models
+- **File**: `backend/tests/unit/models/test_tag.py`
+- Test: `Tag` creation with valid data.
+- Test: `TaskTagLink` creation.
 
-### [x] [T003] [P1] [US1] Create Message SQLModel with MessageRole enum
-- File: `backend/src/models/message.py`
-- Define MessageRole enum (USER, ASSISTANT)
-- Define Message model with fields: id (UUID), conversation_id (FK), user_id (FK), role, content (max 2000 chars), created_at
-- Ensure conversation_id, user_id, and created_at are indexed
+### [x] [T042] [P1] [US9] Update Task model with Tags relationship
+- **File**: `backend/src/models/task.py` (Update)
+- Add `tags: List["Tag"] = Relationship(back_populates="tasks", link_model=TaskTagLink)` to the `Task` model.
 
-### [x] [T004] [P1] [US1] Write tests for Message model
-- File: `backend/tests/unit/models/test_message.py`
-- Test: message creation with valid fields
-- Test: MessageRole enum validation
-- Test: content max length (2000 chars)
-- Test: required indexes exist
-
-### [x] [T005] [P1] [US1] Create ConversationRepository
-- File: `backend/src/repositories/conversation_repository.py`
-- Implement: create_conversation(user_id) → Conversation
-- Implement: get_by_id(conversation_id) → Conversation | None
-- Implement: get_by_user(user_id, limit, offset) → list[Conversation]
-- Implement: delete_conversation(conversation_id) → bool
-
-### [x] [T006] [P1] [US1] Write tests for ConversationRepository
-- File: `backend/tests/unit/repositories/test_conversation_repository.py`
-- Test: create conversation returns valid Conversation
-- Test: get_by_id returns None for non-existent ID
-- Test: get_by_user returns paginated results
-- Test: delete_conversation removes conversation
-
-### [x] [T007] [P1] [US1] Create MessageRepository
-- File: `backend/src/repositories/message_repository.py`
-- Implement: create_message(conversation_id, user_id, role, content) → Message
-- Implement: get_by_conversation(conversation_id, limit, offset) → list[Message]
-- Implement: get_history(conversation_id) → list[Message] (ordered by created_at)
-
-### [x] [T008] [P1] [US1] Write tests for MessageRepository
-- File: `backend/tests/unit/repositories/test_message_repository.py`
-- Test: create_message returns valid Message
-- Test: get_by_conversation returns paginated messages
-- Test: get_history returns messages in chronological order
-
-### [x] [T009] [P1] [Foundation] Create Alembic migration for Conversation and Message tables
-- File: `backend/alembic/versions/xxx_add_conversation_message_tables.py`
-- Add conversations table with indexes
-- Add messages table with indexes and foreign keys
-- Include upgrade and downgrade functions
+### [x] [T043] [P1] [US9] Create Alembic migration for new Tag tables
+- **File**: `backend/alembic/versions/xxx_add_tag_tables.py`
+- Run `alembic revision --autogenerate` to create the migration script for the `tags` and `tasktaglinks` tables.
+- Verify the script correctly creates tables, foreign keys, and indexes.
 
 ---
 
-## ✅ Phase 1 Checkpoint
+## Phase 2: Backend - Repository and MCP Tool Logic
 
-**Run & Verify:**
-```bash
-cd todo_app/phase_3/backend
+**Goal**: Update the data layer and AI tools to be aware of tags.
 
-# Run all model tests
-PYTHONPATH=src uv run pytest tests/unit/models/ -v
+### [x] [T044] [P1] [US9] Update TaskRepository to manage Tags
+- **File**: `backend/src/repositories/task_repository.py` (Update)
+- Implement `find_or_create_tags(tag_names: List[str]) -> List[Tag]`.
+- Update `create()` to accept `tags: List[str]`, call `find_or_create_tags`, and link them to the new task.
+- Update `get_by_id()` to eagerly load associated tags using `selectinload`.
+- Update `list_by_user()` to accept a `tags` filter and join correctly.
 
-# Run repository tests
-PYTHONPATH=src uv run pytest tests/unit/repositories/ -v
+### [x] [T045] [P1] [US9] Write tests for TaskRepository Tag logic
+- **File**: `backend/tests/unit/repositories/test_task_repository.py` (Update)
+- Test: `create()` with tags correctly creates and links them.
+- Test: `list_by_user()` with a tag filter returns the correct tasks.
+- Test: `get_by_id()` returns a task with its tags attached.
 
-# Apply migration
-uv run alembic upgrade head
+### [x] [T046] [P1] [US9] Update MCP `add_task` tool for Tags
+- **File**: `backend/src/mcp_server/tools/add_task.py` (Update)
+- Add `tags: Optional[List[str]] = None` to the function signature.
+- Pass the tags list to `task_repository.create()`.
+- Update the Pydantic schema in `schemas.py` to include the `tags` field.
 
-# Verify tables created
-psql $DATABASE_URL -c "\dt"  # Should show conversations and messages tables
-```
+### [x] [T047] [P1] [US9] Update MCP `list_tasks` tool for Tag Filtering
+- **File**: `backend/src/mcp_server/tools/list_tasks.py` (Update)
+- Add `tags: Optional[List[str]] = None` to the function signature.
+- Pass the tags list to `task_repository.list_by_user()`.
+- Update the Pydantic schema in `schemas.py`.
 
-**Expected Results:**
-- ✅ All model tests passing (13+ tests)
-- ✅ All repository tests passing (6+ tests)
-- ✅ Database tables created with proper indexes
-- ✅ Foreign key constraints in place
+### [x] [T048] [P1] [US9] Write tests for MCP tools with Tags
+- **File**: `backend/tests/unit/mcp/test_add_task.py`, `test_list_tasks.py` (Update)
+- Test `add_task` with a `tags` argument.
+- Test `list_tasks` with a `tags` filter.
 
-**Manual Checks:**
-- [ ] Can create Conversation with user_id
-- [ ] Can create Message with conversation_id and role
-- [ ] Repositories handle pagination correctly
-- [ ] Timestamps auto-generate on creation
-
----
-
-## Phase 2: MCP Server - AI Agent Tools
-
-**Goal**: Implement 5 MCP tools for task management with email integration
-
-### [x] [T010] [P1] [US1] Define Pydantic schemas for MCP tools
-- File: `backend/src/mcp_server/schemas.py`
-- AddTaskInput/Output, ListTasksInput/Output, CompleteTaskInput/Output, DeleteTaskInput/Output, UpdateTaskInput/Output
-- Include user_id validation in all schemas
-
-### [x] [T011] [P1] [US1,US4] Implement add_task MCP tool with email notification
-- File: `backend/src/mcp_server/tools/add_task.py`
-- Validate user_id matches authenticated user
-- Create task via Phase 2 TaskRepository
-- Trigger async email notification (fire-and-forget)
-- Return task_id and email_sent status
-
-### [x] [T012] [P1] [US1,US4] Write tests for add_task tool
-- File: `backend/tests/unit/mcp/test_add_task.py`
-- Test: successful task creation
-- Test: email notification triggered
-- Test: user_id mismatch raises error
-- Test: email failure doesn't block task creation
-
-### [x] [T013] [P1] [US2] Implement list_tasks MCP tool
-- File: `backend/src/mcp_server/tools/list_tasks.py`
-- Validate user_id matches authenticated user
-- Support optional status filter (completed/pending)
-- Return list of tasks with pagination
-
-### [x] [T014] [P1] [US2] Write tests for list_tasks tool
-- File: `backend/tests/unit/mcp/test_list_tasks.py`
-- Test: returns user's tasks only
-- Test: status filter works correctly
-- Test: pagination limits results
-
-### [x] [T015] [P2] [US3] Implement complete_task MCP tool
-- File: `backend/src/mcp_server/tools/complete_task.py`
-- Validate user_id and task ownership
-- Mark task as completed
-- Return updated task
-
-### [x] [T016] [P2] [US3] Write tests for complete_task tool
-- File: `backend/tests/unit/mcp/test_complete_task.py`
-- Test: marks task as completed
-- Test: prevents completing other user's tasks
-
-### [x] [T017] [P2] [US6] Implement delete_task MCP tool
-- File: `backend/src/mcp_server/tools/delete_task.py`
-- Validate user_id and task ownership
-- Delete task permanently
-- Return success status
-
-### [x] [T018] [P2] [US6] Write tests for delete_task tool
-- File: `backend/tests/unit/mcp/test_delete_task.py`
-- Test: deletes task successfully
-- Test: prevents deleting other user's tasks
-
-### [x] [T019] [P2] [US7] Implement update_task MCP tool
-- File: `backend/src/mcp_server/tools/update_task.py`
-- Validate user_id and task ownership
-- Update task title and/or description
-- Return updated task
-
-### [x] [T020] [P2] [US7] Write tests for update_task tool
-- File: `backend/tests/unit/mcp/test_update_task.py`
-- Test: updates task fields
-- Test: prevents updating other user's tasks
-
-### [x] [T021] [P1] [Foundation] Register MCP tools with OpenAI Agents SDK
-- File: `backend/src/mcp_server/server.py`
-- Initialize MCP server with 5 tools
-- Configure tool schemas for OpenAI agent
-- Export tools list for chat service
+### [x] [T049] [P1] [US9] Update AI Agent System Prompt
+- **File**: `backend/src/services/prompts/system_prompt.md` (Update)
+- Add instructions for the AI on how to recognize and use hashtags (`#tag`) to populate the `tags` parameter in tool calls.
 
 ---
 
-## ✅ Phase 2 Checkpoint
+## Phase 3: Frontend - UI for Tags and Rich Notes
 
-**Run & Verify:**
-```bash
-cd todo_app/phase_3/backend
+**Goal**: Build the user interface for creating, viewing, and managing tags and notes.
 
-# Run all MCP tool tests
-PYTHONPATH=src uv run pytest tests/unit/mcp/ -v
+### [x] [T050] [P2] [US9] Create `TagBadge` component
+- **File**: `frontend/src/components/ui/TagBadge.tsx`
+- A simple component that displays a tag name inside a colored, rounded badge.
 
-# Test MCP server initialization
-PYTHONPATH=src uv run python -c "from mcp_server.server import get_mcp_tools; print(f'Loaded {len(get_mcp_tools())} tools')"
+### [x] [T051] [P2] [US9] Create `TagInput` component
+- **File**: `frontend/src/components/ui/TagInput.tsx`
+- A multi-select combobox for adding/creating tags.
+- Use `cmdk` and `shadcn/ui` components as a base.
+- It should allow selecting from existing tags and creating new ones by typing and hitting Enter.
 
-# Test individual tools (mock test)
-PYTHONPATH=src uv run pytest tests/unit/mcp/test_add_task.py -v
-```
+### [x] [T052] [P2] [US9] Integrate `TagInput` into `add-task-dialog.tsx`
+- **File**: `frontend/src/components/add-task-dialog.tsx` (Update)
+- Add the `TagInput` component to the dialog form.
+- Update the `handleSubmit` function to pass the selected tags to the backend API.
 
-**Expected Results:**
-- ✅ All MCP tool tests passing (12+ tests)
-- ✅ 5 tools registered successfully
-- ✅ Email notification triggered in add_task
-- ✅ Security validation works (user_id mismatch blocked)
+### [x] [T053] [P2] [US9] Display Tags in `task-item.tsx`
+- **File**: `frontend/src/components/task-item.tsx` (Update)
+- If a task has tags, use the `TagBadge` component to display them.
 
-**Manual Checks:**
-- [ ] add_task creates task and triggers email
-- [ ] list_tasks filters by user and status
-- [ ] complete_task updates task status
-- [ ] delete_task removes task
-- [ ] update_task modifies task fields
-- [ ] All tools validate user ownership
+### [x] [T054] [P2] [US10] Integrate Markdown Renderer
+- **File**: `frontend/src/components/ui/MarkdownRenderer.tsx`
+- Create a wrapper component around `react-markdown`.
+- Add `remark-gfm` for tables, strikethrough, etc.
+- Style the output to match the app's theme (headings, lists, blockquotes).
 
----
+### [x] [T055] [P2] [US10] Update Task Detail View for Rich Notes
+- **File**: `frontend/src/components/task-item.tsx` or a new detail view.
+- Use the `MarkdownRenderer` component to render the `task.description` field.
+- If no dedicated detail view exists, ensure task descriptions in modals or expanded views are rendered as Markdown.
 
-## Phase 3: Chat Service - AI Orchestration
-
-**Goal**: Implement stateless AI chat endpoint with conversation persistence
-
-### [x] [T022] [P1] [US1,US5] Create ChatService with OpenAI Agents SDK
-- File: `backend/src/services/chat_service.py`
-- Initialize OpenAI agent with MCP tools
-- Implement: process_message(user_id, message, conversation_id?) → response
-- Load conversation history from database
-- Persist user message and assistant response
-
-### [x] [T023] [P1] [US1,US5] Write tests for ChatService
-- File: `backend/tests/unit/services/test_chat_service.py`
-- Test: creates new conversation if conversation_id is None
-- Test: loads existing conversation history
-- Test: calls OpenAI agent with full context
-- Test: persists messages to database
-
-### [x] [T024] [P1] [US1,US5] Implement multilingual system prompt (English + Urdu)
-- File: `backend/src/services/prompts/system_prompt.md`
-- Define system prompt with language detection instructions
-- Support English, Roman Urdu, and Urdu script
-- Instruct agent to mirror user's language
-
-### [x] [T025] [P1] [US1] Create POST /api/{user_id}/chat endpoint
-- File: `backend/src/api/routes/chat.py`
-- Validate JWT and extract user_id
-- Accept: message (str), conversation_id (UUID | None)
-- Call ChatService.process_message()
-- Return: conversation_id, response, tool_calls, created_at
-
-### [x] [T026] [P1] [US1] Write integration tests for /chat endpoint
-- File: `backend/tests/integration/test_chat_endpoint.py`
-- Test: creates conversation on first message
-- Test: continues existing conversation
-- Test: validates JWT user_id matches path parameter
-- Test: returns 403 if user_id mismatch
-
----
-
-## ✅ Phase 3 Checkpoint
-
-**Run & Verify:**
-```bash
-cd todo_app/phase_3/backend
-
-# Run chat service tests
-PYTHONPATH=src uv run pytest tests/unit/services/test_chat_service.py -v
-
-# Run integration tests
-PYTHONPATH=src uv run pytest tests/integration/test_chat_endpoint.py -v
-
-# Start backend server
-PYTHONPATH=src uv run uvicorn src.main:app --reload
-
-# Test chat endpoint (in another terminal)
-curl -X POST http://localhost:8000/api/{user_id}/chat \
-  -H "Authorization: Bearer YOUR_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Task add karo: Buy groceries"}'
-```
-
-**Expected Results:**
-- ✅ ChatService tests passing (4+ tests)
-- ✅ Integration tests passing (4+ tests)
-- ✅ Chat endpoint returns conversation_id and AI response
-- ✅ Multilingual prompt works (English + Urdu)
-- ✅ Conversation persisted in database
-- ✅ AI agent calls MCP tools successfully
-
-**Manual Checks:**
-- [x] English message: "Add task: Buy milk" → Task created
-- [x] Urdu message: "Task add karo" → Response in Urdu
-- [x] Conversation history loaded correctly
-- [x] JWT validation working
-- [x] Tool calls logged in response
-
----
-
-## Phase 4: Frontend - Chat UI and Voice Input
-
-**Goal**: Build React chat interface with voice input
-
-### [x] [T027] [P1] [US1] Create Chat page with App Router
-- File: `frontend/src/app/chat/page.tsx`
-- Server Component for initial layout
-- Client Component for chat interaction
-- Display conversation history
-
-### [x] [T028] [P1] [US1] Create ChatMessage component
-- File: `frontend/src/components/chat/ChatMessage.tsx`
-- Display user and assistant messages
-- Show message timestamp
-- Support markdown rendering for assistant responses
-
-### [x] [T029] [P1] [US1] Create ChatInput component with send button
-- File: `frontend/src/components/chat/ChatInput.tsx`
-- Text input for message
-- Send button
-- Handle Enter key to send
-- Clear input after send
-
-### [x] [T030] [P1] [US1] Implement useChatConversation hook
-- File: `frontend/src/hooks/useChatConversation.tsx`
-- Manage conversation state
-- Send messages to POST /api/{user_id}/chat
-- Update conversation history
-- Handle loading and error states
-
-### [x] [T031] [P2] [US8] Create useVoiceRecognition hook with Web Speech API
-- File: `frontend/src/hooks/useVoiceRecognition.tsx`
-- Initialize SpeechRecognition with English language
-- Provide: startListening(), stopListening(), transcript state
-- Handle browser compatibility (Chrome/Edge/Safari)
-- Emit events: onResult, onError, onEnd
-
-### [x] [T032] [P2] [US8] Create MicrophoneButton component
-- File: `frontend/src/components/chat/MicrophoneButton.tsx`
-- Show microphone icon (inactive/active/disabled states)
-- Request microphone permission on first click
-- Start/stop voice recognition
-- Display visual feedback during listening
-
-### [x] [T033] [P2] [US8] Integrate voice input with ChatInput
-- File: `frontend/src/components/chat/ChatInput.tsx` (update)
-- Add MicrophoneButton next to send button
-- Append voice transcript to text input in real-time
-- Allow user to edit before sending
-- Disable during network requests
-
----
-
-## ✅ Phase 4 Checkpoint
-
-**Run & Verify:**
-```bash
-cd todo_app/phase_3/frontend
-
-# Install dependencies
-npm install
-
-# Run frontend dev server
-npm run dev
-
-# Run frontend tests
-npm test
-
-# Build for production
-npm run build
-```
-
-**Expected Results:**
-- ✅ Frontend compiles without errors
-- ✅ Chat page renders at /chat
-- ✅ Messages display correctly (user + assistant)
-- ✅ Send button works
-- ✅ Voice input button appears (if browser supports)
-
-**Manual Checks:**
-- [ ] Open http://localhost:3000/chat
-- [ ] Type message "Add task: Test" → AI responds
-- [ ] Conversation history persists on refresh
-- [ ] Click microphone → Voice recognition starts
-- [ ] Speak "Add task Buy milk" → Text appears in input
-- [ ] Markdown rendering works in AI responses
-- [ ] Loading states show during API calls
-- [ ] Error messages display on failure
-
-**Browser Test:**
-- [ ] Chrome: Voice input works
-- [ ] Edge: Voice input works
-- [ ] Safari: Graceful fallback if no voice support
-- [ ] Mobile: Touch-friendly interface
-
----
-
-## Phase 5: Integration & Polish
-
-**Goal**: Connect Phase 3 with Phase 2 and add final enhancements
-
-### [ ] [T034] [Foundation] Configure shared database connection for Phase 2 and 3
-- File: `backend/src/config/database.py`
-- Ensure Phase 3 models use same DATABASE_URL as Phase 2
-- Configure SQLModel metadata to include both phases
-
-### [ ] [T035] [Foundation] Update Phase 2 Better Auth to issue JWT for Phase 3
-- File: Phase 2 `frontend/auth.ts` (update)
-- Ensure JWT includes user_id claim
-- Configure JWT expiry and secret sharing
-
-### [ ] [T036] [Polish] Add error handling and retry logic for OpenAI API calls
-- File: `backend/src/services/chat_service.py` (update)
-- Implement exponential backoff for rate limits
-- Handle OpenAI API errors gracefully
-- Return user-friendly error messages
-
-### [ ] [T037] [Polish] Write E2E test for complete chat flow
-- File: `backend/tests/e2e/test_chat_flow.py`
-- Test: user logs in → creates conversation → sends message → receives AI response → task created → email sent
-
-### [ ] [T038] [Polish] Add loading states and optimistic updates to frontend
-- File: `frontend/src/components/chat/ChatMessage.tsx` (update)
-- Show skeleton loader during API calls
-- Display user message immediately (optimistic UI)
-- Handle message send failures
-
-### [ ] [T039] [Polish] Create deployment configuration for Phase 3
-- File: `backend/Dockerfile`, `docker-compose.yml` (Phase 3)
-- Containerize Phase 3 backend
-- Configure environment variables for production
-- Document deployment steps
-
----
-
-## ✅ Phase 5 Checkpoint (Final Integration)
-
-**Run & Verify:**
-```bash
-# Run full E2E test
-cd todo_app/phase_3/backend
-PYTHONPATH=src uv run pytest tests/e2e/test_chat_flow.py -v
-
-# Test Phase 2 + Phase 3 integration
-# 1. Start Phase 2 backend (on port 8000)
-cd todo_app/phase_2/backend
-uv run uvicorn src.todo_app.main:app --port 8000
-
-# 2. Start Phase 3 backend (on port 8001)
-cd todo_app/phase_3/backend
-PYTHONPATH=src uv run uvicorn src.main:app --port 8001
-
-# 3. Start frontend (connects to both backends)
-cd todo_app/phase_2/frontend
-npm run dev
-
-# Test complete flow
-curl -X POST http://localhost:8001/api/{user_id}/chat \
-  -H "Authorization: Bearer JWT_FROM_PHASE2" \
-  -d '{"message": "Add task: Integration test"}'
-```
-
-**Expected Results:**
-- ✅ E2E test passes (full flow: login → chat → task created → email sent)
-- ✅ Phase 2 and Phase 3 share same database
-- ✅ JWT from Phase 2 works in Phase 3
-- ✅ Chat creates tasks visible in Phase 2 dashboard
-- ✅ Email notifications working
-- ✅ Docker containers build and run
-
-**Manual Checks:**
-- [ ] Login via Phase 2 → Get JWT
-- [ ] Use JWT in Phase 3 chat endpoint
-- [ ] Create task via chat: "Add task: Test integration"
-- [ ] Check Phase 2 dashboard → Task appears
-- [ ] Check email → Notification received
-- [ ] Voice input works in production build
-- [ ] All error states handled gracefully
-
-**Production Readiness:**
-- [ ] Environment variables configured
-- [ ] Database migrations applied
-- [ ] Docker images built
-- [ ] SSL/HTTPS configured
-- [ ] Rate limiting enabled
-- [ ] Monitoring/logging set up
+### [ ] [T056] [P2] [US10] Write tests for new Frontend components
+- **File**: `frontend/tests/unit/components/`
+- Add tests for `TagBadge.tsx`, `TagInput.tsx`, and `MarkdownRenderer.tsx`.
 
 ---
 
 ## Summary
 
-**Total Tasks**: 39
-**Foundation (Blocking)**: 9 tasks (T001-T009, Phase 1)
-**User Stories P1**: 17 tasks (T010-T026, Phases 2-3)
-**User Stories P2**: 8 tasks (T027-T034, Phase 4)
-**Polish**: 5 tasks (T035-T039, Phase 5)
-
-**Estimated Effort**: ~60-70 hours (6-7 working days)
-
-**Dependency Flow**:
-1. Foundation (Phase 1) → All other tasks depend on this
-2. MCP Server (Phase 2) → Required for Chat Service
-3. Chat Service (Phase 3) → Required for Frontend
-4. Frontend (Phase 4) → Can start after Chat endpoint is ready
-5. Integration & Polish (Phase 5) → Final touches
-
-**Parallelization Opportunities**:
-- After Phase 1: MCP tool tests can run in parallel
-- After Phase 2: Frontend development can start while Chat Service is being built
-- Phase 5 tasks are independent and can be parallelized
+- **Total Tasks**: 17
+- **Backend**: 10 tasks (T040-T049)
+- **Frontend**: 7 tasks (T050-T056)
+- **Dependency Flow**: Backend models → Backend logic → Frontend UI.
+- **First Step**: Begin with `[T040]` to define the database schema.

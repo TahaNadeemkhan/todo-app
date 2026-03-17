@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: todo-app
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "frontend"
+    spec:
+      containers:
+      - name: frontend
+        image: frontend:v5.0.2
+        imagePullPolicy: IfNotPresent
+        command: ["node", "server.js", "-H", "0.0.0.0"]
+        ports:
+        - containerPort: 3000
+        env:
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        - name: PORT
+          value: "3000"
+        - name: BETTER_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret_key
+        - name: BETTER_AUTH_URL
+          value: "http://localhost:3000"
+        - name: NEXT_PUBLIC_APP_URL
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: better_auth_url
+        # If SSR uses Dapr to call backend
+        - name: DAPR_HTTP_PORT
+          value: "3500"
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://backend-api:80" # Internal service DNS or external Ingress URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: connectionString
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: todo-app
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 3000
+    nodePort: 30000

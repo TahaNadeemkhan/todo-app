@@ -19,36 +19,12 @@ class ToolSecurityError(Exception):
     """Raised when a tool is called with unauthorized parameters."""
     pass
 
-@mcp.tool(
-    name="add_task",
-    description="Create a new task in the database. Use when user wants to add, create, or remember a new todo item."
-)
 async def add_task(
     user_id: str,
     title: str,
     description: str | None = None,
-    notify_email: str | None = None
-    # Context is injected by FastMCP if declared? 
-    # FastMCP supports Context injection but usually via `ctx: Context` type hint.
-    # Our requirements used `ToolContext`. We might need to adapt.
-    # For now, let's keep the user's defined Schema logic BUT FastMCP prefers primitive types in signature 
-    # to auto-generate schema.
-    # However, the user specifically asked for "Pydantic schemas for MCP tools" (Task T010).
-    # FastMCP works BEST with Python primitives + Docstrings.
-    # BUT we can use Pydantic models.
-    
-    # Wait, the mcp-tool-writer prompt said: "Input schema (all required and optional parameters)"
-    # and "Create tool specifications with ... Input schema".
-    # FastMCP *auto-generates* from signature.
-    
-    # I will adapt the function signature to match FastMCP best practices (primitives) 
-    # OR keep Pydantic if FastMCP supports it well (it does).
-    
-    # Crucially: We need to handle `ToolContext`. 
-    # If I change the signature, I break the tests I just wrote.
-    # But I promised to match the agent.
-    
-    # Let's try to keep the signature close to what we had but add the decorator.
+    notify_email: str | None = None,
+    tags: list[str] | None = None
 ) -> dict:
     """
     Add a new task to the user's todo list.
@@ -57,39 +33,50 @@ async def add_task(
         user_id: The authenticated user's ID (UUID string)
         title: Task title (required, 1-200 characters)
         description: Optional task description (max 1000 characters)
-        notify_email: Optional email address for task notifications
+        notify_email: Optional email address for task notifications. If not provided, will look up user's registered email.
+        tags: Optional list of tags to associate with the task.
     """
-    # NOTE: In a real FastMCP integration with an Agent, `context` usually comes from 
-    # the request context (e.g. injected via a Context parameter or context var).
-    # Since we are "Stateless HTTP", the context must be passed in the arguments or headers.
-    # The `mcp-tool-writer` agent example showed: `def add_task(user_id: str, ...)`
-    # It didn't explicitly show `context` injection in the signature in the example.
-    
-    # Security: We need to verify `user_id`. In a real HTTP call, 
-    # the Auth middleware would verify the JWT and ensure the caller is `user_id`.
-    # Here, we accept `user_id` as an arg.
-    
     # Use string user_id directly (Phase 2 uses string IDs)
     if not user_id or not isinstance(user_id, str):
         raise ValueError("Invalid user_id format")
 
     # 2. Database Operation (Stateless)
+    email_to_use = notify_email
+    
     async for session in get_async_session():
+        # If no email provided, try to look it up from User table
+        if not email_to_use:
+            try:
+                # Query User table
+                stmt = select(User).where(User.id == user_id)
+                result = await session.execute(stmt)
+                user = result.scalar_one_or_none()
+                
+                if user and user.email:
+                    email_to_use = user.email
+                    logger.info(f"📧 Found registered email for user {user_id}: {email_to_use}")
+                else:
+                    logger.warning(f"⚠️ No user found or no email for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to lookup user email: {e}")
+
+        # Create Task
         repo = TaskRepository(session)
         task = await repo.create(
             user_id=user_id,
             title=title,
             description=description,
-            notify_email=notify_email
+            notify_email=email_to_use, # Save the email we found/used
+            tags=tags
         )
 
-    # 3. Side Effect: Email Notification (only if email provided)
+    # 3. Side Effect: Email Notification (only if email found)
     email_sent = False
-    if notify_email:
+    if email_to_use:
         try:
             asyncio.create_task(
                 email_service.send_notification(
-                    to_email=notify_email,
+                    to_email=email_to_use,
                     notification_type="task_created",
                     task_title=task.title,
                     task_description=task.description
@@ -104,5 +91,6 @@ async def add_task(
         "task_id": str(task.id),
         "status": "created",
         "title": task.title,
-        "email_sent": email_sent
+        "email_sent": email_sent,
+        "tags": [tag.name for tag in task.tags] if hasattr(task, 'tags') and task.tags else []
     }

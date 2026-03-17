@@ -343,6 +343,21 @@ Replace `MemoryStore` with database storage:
 - Add user authentication and authorization
 - Store attachments in cloud storage (S3, etc.)
 
+### Pattern 4: Voice/Multi-modal Integration
+To add voice capabilities without complex client-side STT libraries:
+
+1. **Frontend Recording**: Use `MediaRecorder` API to capture audio blobs (webm/wav).
+2. **Server-Side Transcription**: Send audio `FormData` to a backend endpoint (`/api/voice/transcribe`).
+3. **AI Transcription**: Backend uses Gemini Flash or OpenAI Whisper to transcribe audio to text.
+4. **Text Injection**: Frontend receives text and injects it into ChatKit using `control.sendUserMessage(text)`.
+
+**Architecture:**
+```mermaid
+[Client Mic] -> [MediaRecorder] -> [POST /api/voice] -> [Backend] -> [Gemini/Whisper]
+                                                                        |
+[ChatKit UI] <- [control.send(text)] <- [JSON {text: "..."}] <----------+
+```
+
 ## Key Implementation Notes
 
 1. **Memory Store Limitation**: The in-memory store is for development only. Data is lost on restart.

@@ -17,10 +17,12 @@ An intelligent AI assistant integrated into the web app that lets you manage tas
 - **ChatKit UI:** Modern streaming chat interface powered by OpenAI Agents SDK
 
 ### 🤖 AI Capabilities
+- **Voice Input:** Speak naturally to add tasks - hands-free task management
 - Natural language task creation: "Add buy groceries to my list"
 - Bulk operations: "Mark all today's tasks as complete"
 - Smart queries: "What tasks are due this week?"
 - Contextual understanding of priorities and deadlines
+- Real-time audio transcription and AI response
 
 ### 🚀 Getting Started
 

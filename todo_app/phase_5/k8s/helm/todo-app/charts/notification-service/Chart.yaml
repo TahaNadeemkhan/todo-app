@@ -1,0 +1,19 @@
+# T142: Helm Chart for Notification Service
+
+apiVersion: v2
+name: notification-service
+description: Microservice for sending email and push notifications
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - microservices
+  - notifications
+  - email
+  - push
+  - dapr
+
+maintainers:
+  - name: Todo App Team
+    email: team@todoapp.com

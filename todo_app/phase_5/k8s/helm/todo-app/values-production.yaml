@@ -1,0 +1,69 @@
+# Production overrides for Todo App
+
+global:
+  environment: production
+
+backend:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - host: api.todo-app.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: todo-api-tls
+        hosts:
+          - api.todo-app.com
+
+frontend:
+  replicaCount: 2
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - host: todo-app.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: todo-frontend-tls
+        hosts:
+          - todo-app.com
+
+# Disable in-cluster dependencies (use managed services)
+kafka:
+  enabled: false
+
+postgresql:
+  enabled: false
+
+# External Service Configuration (Secrets managed separately)
+externalServices:
+  kafka:
+    brokers: "redpanda-broker-url:9092"
+    auth:
+      saslMechanism: "SCRAM-SHA-256"
+      tls: true
+  
+  postgres:
+    host: "neon-db-host"
+    port: 5432
+    sslMode: "require"

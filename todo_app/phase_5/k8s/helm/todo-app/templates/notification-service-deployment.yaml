@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-app.fullname" . }}-notification
+  labels:
+    app: notification-service
+spec:
+  replicas: {{ .Values.notificationService.replicaCount }}
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+      annotations:
+        dapr.io/enabled: {{ .Values.dapr.enabled | quote }}
+        dapr.io/app-id: "notification-service"
+        dapr.io/app-port: "8002"
+    spec:
+      containers:
+      - name: notification-service
+        image: "{{ .Values.notificationService.image.repository }}:{{ .Values.notificationService.image.tag }}"
+        imagePullPolicy: {{ .Values.notificationService.image.pullPolicy }}
+        ports:
+        - containerPort: 8002
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: connectionString
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: smtp-credentials
+              key: smtp_host
+        resources:
+          {{- toYaml .Values.notificationService.resources | nindent 10 }}

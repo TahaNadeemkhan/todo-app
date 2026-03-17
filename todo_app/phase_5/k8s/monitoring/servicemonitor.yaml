@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: todo-app-monitor
+  namespace: default
+  labels:
+    release: prometheus # Required for prometheus-operator to pick it up
+spec:
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [backend-api, notification-service, recurring-task-service]
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+  - port: 8001  # Fallback for unnamed ports
+    path: /metrics
+  - port: 8002
+    path: /metrics

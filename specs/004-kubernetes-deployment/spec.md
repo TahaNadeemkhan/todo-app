@@ -19,7 +19,7 @@ This specification defines the requirements for deploying the Phase 3 AI-powered
 - Helm chart development for Kubernetes deployment
 - Local Kubernetes deployment using Minikube
 - Integration with external Neon PostgreSQL database
-- AI-assisted DevOps using Gordon, kubectl-ai, and kagent
+- AI-powered DevOps orchestration using Gordon, kubectl-ai, and kagent (Required for Core DevOps implementation)
 - Environment configuration and secrets management
 
 **Out of Scope:**
@@ -101,20 +101,20 @@ As a **security-conscious developer**, I want sensitive configuration (database 
 
 ---
 
-### User Story 5 - AI-Assisted DevOps Operations (Priority: P2)
+### User Story 5 - AI-Powered DevOps Orchestration (Priority: P1)
 
-As a **developer new to Kubernetes**, I want to use AI-powered tools to assist with Docker and Kubernetes operations so that I can learn and execute complex commands efficiently.
+As a **DevOps engineer**, I want to use AI-powered copilots (Gordon, kubectl-ai, kagent) to orchestrate and optimize my containerized workloads so that I can achieve peak productivity and cluster efficiency.
 
-**Why this priority**: Hackathon bonus requirement - demonstrates modern AI-assisted DevOps practices. Enhances developer experience.
+**Why this priority**: Core requirement for Phase 4 - mandatory for high-scoring Hackathon implementation. These tools act as the brain of the DevOps cycle.
 
-**Independent Test**: Can be tested by using Gordon for Docker operations and kubectl-ai for Kubernetes queries, verifying correct outputs.
+**Independent Test**: Can be tested by running Gordon for image analysis, kubectl-ai for cluster commands, and kagent for health reports.
 
 **Acceptance Scenarios**:
 
-1. **Given** Gordon is available, **When** I ask "build a production image for this Next.js app", **Then** Gordon provides correct build command or executes it
-2. **Given** kubectl-ai is installed, **When** I ask "show me all pods in todo namespace", **Then** correct kubectl command is executed and output displayed
-3. **Given** kagent is available, **When** I ask "analyze cluster health", **Then** I receive actionable insights about pod status and resource usage
-4. **Given** AI tool output, **When** I review the suggestion, **Then** command is safe to execute (no destructive operations without confirmation)
+1. **Given** Gordon is configured, **When** I run `gordon analyze Dockerfile`, **Then** it provides multi-stage and security optimization recommendations for frontend/backend
+2. **Given** Minikube is running, **When** I use `kubectl-ai` to "create a Horizontal Pod Autoscaler for backend", **Then** the manifest is correctly generated and applied
+3. **Given** pods are running, **When** I ask `kagent` to "optimize resource usage", **Then** it provides data-driven CPU/Memory limit adjustments
+4. **Given** AI tool output, **When** I review the suggestion, **Then** command is safe to execute and follows Kubernetes best practices
 
 ---
 

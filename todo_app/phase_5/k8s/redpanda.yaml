@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda
+  namespace: todo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      containers:
+      - name: redpanda
+        image: docker.redpanda.com/redpandadata/redpanda:v23.3.1
+        args:
+        - redpanda
+        - start
+        - --overprovisioned
+        - --smp
+        - "1"
+        - --memory
+        - 512Mi
+        - --reserve-memory
+        - 0M
+        - --node-id
+        - "0"
+        - --check=false
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 9644
+          name: admin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: todo-app
+spec:
+  ports:
+  - port: 9092
+    targetPort: 9092
+    name: kafka
+  - port: 9644
+    targetPort: 9644
+    name: admin
+  selector:
+    app: redpanda

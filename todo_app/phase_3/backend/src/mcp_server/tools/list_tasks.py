@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 
 @mcp.tool(
     name="list_tasks",
-    description="Retrieve user's task list. Can filter by status (pending, completed)."
+    description="Retrieve user's task list. Can filter by status (pending, completed) and tags (e.g. ['work', 'urgent'])."
 )
 async def list_tasks(
     user_id: str,
     status: str = "all",
+    tags: list[str] | None = None,
     limit: int = 20,
     offset: int = 0
 ) -> dict:
@@ -27,6 +28,7 @@ async def list_tasks(
     Args:
         user_id: The authenticated user's ID
         status: Filter by status ('all', 'pending', 'completed')
+        tags: Optional list of tags to filter by
         limit: Max number of tasks to return
         offset: Pagination offset
     """
@@ -40,11 +42,6 @@ async def list_tasks(
     async for session in get_async_session():
         repo = TaskRepository(session)
         
-        # Mapping 'status' string to boolean for repository if needed, 
-        # but repository likely handles 'completed' bool.
-        # Let's see TaskRepository.get_by_user signature.
-        # Assuming it takes optional `completed` bool.
-        
         completed_filter = None
         if status == "completed":
             completed_filter = True
@@ -55,10 +52,11 @@ async def list_tasks(
             user_id=user_id,
             completed=completed_filter,
             limit=limit,
-            offset=offset
+            offset=offset,
+            tags=tags
         )
         
-        count = len(tasks) # This is page count, real count requires separate query but fine for MVP
+        count = len(tasks)
 
     return {
         "tasks": [
@@ -67,7 +65,8 @@ async def list_tasks(
                 "title": t.title,
                 "description": t.description,
                 "completed": t.completed,
-                "created_at": t.created_at
+                "created_at": t.created_at,
+                "tags": [tag.name for tag in t.tags] if hasattr(t, 'tags') and t.tags else []
             }
             for t in tasks
         ],

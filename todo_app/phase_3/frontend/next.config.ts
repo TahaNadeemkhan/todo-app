@@ -15,12 +15,15 @@ const nextConfig: NextConfig = {
   },
   // Proxy ChatKit API requests to backend
   async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
     return [
       {
         source: "/api/chatkit",
-        destination: process.env.NEXT_PUBLIC_BACKEND_URL
-          ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/chatkit`
-          : "http://127.0.0.1:8000/chatkit",
+        destination: `${backendUrl}/chatkit`,
+      },
+      {
+        source: "/api/voice/transcribe",
+        destination: `${backendUrl}/voice/transcribe`,
       },
     ];
   },
